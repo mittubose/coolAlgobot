@@ -61,7 +61,55 @@ def load_config():
 @app.route('/')
 def index():
     """Main dashboard page"""
-    return render_template('dashboard_v2.html')
+    return render_template('dashboard.html')
+
+
+@app.route('/strategies')
+def strategies():
+    """Strategies page"""
+    return render_template('strategies.html')
+
+
+@app.route('/analytics')
+def analytics():
+    """Analytics page"""
+    return render_template('analytics.html')
+
+
+@app.route('/accounts')
+def accounts():
+    """Accounts page"""
+    return render_template('accounts.html')
+
+
+@app.route('/settings')
+def settings():
+    """Settings page"""
+    return render_template('settings.html')
+
+
+@app.route('/notifications')
+def notifications():
+    """Notifications page"""
+    return render_template('notifications.html')
+
+
+@app.route('/help')
+def help_page():
+    """Help page"""
+    return render_template('help.html')
+
+
+@app.route('/history')
+def history():
+    """History page - trades and sessions"""
+    return render_template('history.html')
+
+
+@app.route('/profile')
+def profile():
+    """Profile page"""
+    return render_template('profile.html')
 
 
 @app.route('/api/status')

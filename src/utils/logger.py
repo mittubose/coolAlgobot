@@ -239,3 +239,11 @@ def get_logger(name: str = 'scalping_bot') -> logging.Logger:
     if _logger_setup:
         return _logger_setup.get_logger(name)
     return logging.getLogger(name)
+
+
+def setup_logger(name: str = 'scalping_bot') -> logging.Logger:
+    """
+    Setup and return a logger instance
+    Alias for get_logger for backward compatibility
+    """
+    return get_logger(name)

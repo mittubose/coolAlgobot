@@ -1,0 +1,19 @@
+# Security Enhancements for Scalping Bot
+# Install with: pip install -r requirements_security.txt
+
+# CSRF Protection
+Flask-WTF>=1.2.1
+
+# Rate Limiting
+Flask-Limiter>=3.5.0
+
+# Encryption for tokens
+cryptography>=41.0.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# Existing requirements (ensure these are also in main requirements.txt)
+Flask>=3.0.0
+Flask-CORS>=4.0.0
+PyYAML>=6.0.1

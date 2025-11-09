@@ -1,13 +1,18 @@
 """
-Configuration Loader
+Secure Configuration Loader
 Loads and validates configuration from YAML files and environment variables
+Supports environment variable substitution with ${VAR_NAME} syntax
 """
 
 import os
 import yaml
+import re
+import logging
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from dotenv import load_dotenv
+
+logger = logging.getLogger('config_loader')
 
 
 class ConfigLoader:
@@ -60,13 +65,44 @@ class ConfigLoader:
         with open(self.config_path, 'r') as f:
             self.config = yaml.safe_load(f)
 
+        # Substitute environment variables
+        self._substitute_env_vars()
+
         # Validate configuration
         self._validate_config()
 
-        # Merge secrets into config
+        # Merge secrets into config (for backward compatibility)
         self._merge_secrets()
 
         return self.config
+
+    def _substitute_env_vars(self):
+        """Replace ${VAR_NAME} placeholders with environment variables"""
+        def substitute(obj):
+            if isinstance(obj, dict):
+                return {k: substitute(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [substitute(item) for item in obj]
+            elif isinstance(obj, str):
+                # Match ${VAR_NAME} or ${VAR_NAME:default_value}
+                pattern = r'\$\{([^}:]+)(?::([^}]*))?\}'
+
+                def replacer(match):
+                    var_name = match.group(1)
+                    default_value = match.group(2)
+                    value = os.getenv(var_name, default_value)
+
+                    if value is None:
+                        logger.warning(f"Environment variable not set: {var_name}")
+                        return match.group(0)  # Return original ${VAR} if not found
+
+                    return value
+
+                return re.sub(pattern, replacer, obj)
+            else:
+                return obj
+
+        self.config = substitute(self.config)
 
     def _validate_config(self):
         """Validate required configuration fields"""
@@ -99,23 +135,23 @@ class ConfigLoader:
             raise ValueError("No strategies enabled for trading")
 
     def _merge_secrets(self):
-        """Merge secrets into configuration"""
-        # Merge API credentials
-        if 'KITE_API_KEY' in self.secrets:
+        """Merge secrets into configuration (only if not empty)"""
+        # Merge API credentials (only if not empty to preserve env var substitution)
+        if self.secrets.get('KITE_API_KEY'):
             self.config['broker']['api_key'] = self.secrets['KITE_API_KEY']
-        if 'KITE_API_SECRET' in self.secrets:
+        if self.secrets.get('KITE_API_SECRET'):
             self.config['broker']['api_secret'] = self.secrets['KITE_API_SECRET']
-        if 'KITE_ACCESS_TOKEN' in self.secrets:
+        if self.secrets.get('KITE_ACCESS_TOKEN'):
             self.config['broker']['access_token'] = self.secrets['KITE_ACCESS_TOKEN']
 
-        # Merge Telegram credentials
-        if 'TELEGRAM_BOT_TOKEN' in self.secrets:
+        # Merge Telegram credentials (only if not empty)
+        if self.secrets.get('TELEGRAM_BOT_TOKEN'):
             self.config['alerts']['telegram']['bot_token'] = self.secrets['TELEGRAM_BOT_TOKEN']
-        if 'TELEGRAM_CHAT_ID' in self.secrets:
+        if self.secrets.get('TELEGRAM_CHAT_ID'):
             self.config['alerts']['telegram']['chat_id'] = self.secrets['TELEGRAM_CHAT_ID']
 
-        # Merge email password
-        if 'EMAIL_PASSWORD' in self.secrets:
+        # Merge email password (only if not empty)
+        if self.secrets.get('EMAIL_PASSWORD'):
             self.config['alerts']['email']['password'] = self.secrets['EMAIL_PASSWORD']
 
     def get(self, key_path: str, default=None):

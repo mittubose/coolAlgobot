@@ -6,10 +6,42 @@
     <title>Scalping Bot - Strategy Catalog</title>
 
     <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest">
+
+        // Initialize top bar on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Restore saved portfolio
+            const savedPortfolio = localStorage.getItem('selectedPortfolio') || '1';
+            const selector = document.getElementById('topbar-account-selector');
+            if (selector) {
+                selector.value = savedPortfolio;
+            }
+
+            // Mark current page as active
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href === currentPath || (currentPath === '/' && href === '/')) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Load funds
+            loadTopBarFunds();
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+
+    </script>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Strategies Page Styles -->
+    <link rel="stylesheet" href="/static/css/strategies.css">
 
     <style>
         /* Ultra-Compact Design Tokens v2.1 */
@@ -183,7 +215,7 @@
         /* Main Content */
         .main {
             flex: 1;
-            margin-left: 240px;
+            margin-left: 0;
             display: flex;
             flex-direction: column;
         }
@@ -848,60 +880,50 @@
                 height: 200px;
             }
         }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .topbar {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 12px;
+            }
+
+            .topbar-nav {
+                order: 3;
+                width: 100%;
+                margin-top: 12px;
+                justify-content: flex-start;
+                overflow-x: auto;
+            }
+
+            .topbar-actions {
+                gap: 8px;
+            }
+
+            .funds-label,
+            .topbar-status {
+                display: none;
+            }
+        }
+
     </style>
 </head>
 <body>
     <div class="app">
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar__logo">
-                <div class="sidebar__logo-icon">S</div>
-                <span class="sidebar__logo-text">Scalping Bot</span>
-            </div>
-
-            <nav style="flex: 1;">
-                <a href="/" class="nav-item">
-                    <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/accounts" class="nav-item">
-                    <i data-lucide="wallet" style="width: 18px; height: 18px;"></i>
-                    <span>Accounts</span>
-                </a>
-                <a href="/strategies" class="nav-item active">
-                    <i data-lucide="brain" style="width: 18px; height: 18px;"></i>
-                    <span>Strategies</span>
-                </a>
-                <a href="/analytics" class="nav-item">
-                    <i data-lucide="bar-chart-3" style="width: 18px; height: 18px;"></i>
-                    <span>Analytics</span>
-                </a>
-
-                <div class="nav-divider"></div>
-
-                <a href="/notifications" class="nav-item">
-                    <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
-                    <span>Notifications</span>
-                </a>
-                <a href="/settings" class="nav-item">
-                    <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
-                    <span>Settings</span>
-                </a>
-            </nav>
-
-            <div>
-                <a href="/help" class="nav-item">
-                    <i data-lucide="help-circle" style="width: 18px; height: 18px;"></i>
-                    <span>Help</span>
-                </a>
-            </div>
-        </aside>
+        
 
         <!-- Main Content -->
         <main class="main">
             <!-- Top Bar -->
             <header class="topbar">
                 <div class="topbar__left">
+                    <!-- Logo -->
+                    <a href="/" class="topbar__logo" style="text-decoration: none; color: inherit; cursor: pointer;">
+                        <div class="topbar__logo-icon">S</div>
+                        <span>Scalping Bot</span>
+                    </a>
                     <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">
                         <div class="hamburger__line"></div>
                         <div class="hamburger__line"></div>
@@ -926,16 +948,62 @@
                 </div>
 
                 <div class="topbar__right">
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
-                        <span class="topbar__badge">0</span>
-                    </button>
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
-                    </button>
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="user" style="width: 18px; height: 18px;"></i>
-                    </button>
+                    <!-- Notification Dropdown -->
+                    <div class="dropdown">
+                        <button class="topbar__icon-btn" onclick="toggleDropdown('notificationDropdown')" aria-label="Notifications">
+                            <i data-lucide="bell" class="icon-18"></i>
+                            <span class="topbar__badge" id="notification-count">0</span>
+                        </button>
+                        <div class="dropdown__menu notification-dropdown" id="notificationDropdown">
+                            <div class="dropdown__header">Notifications</div>
+                            <div class="notification-empty" id="notificationList">
+                                No new notifications
+                            </div>
+                            <div class="notification-footer">
+                                <button class="notification-footer__btn" onclick="window.location.href='/notifications'">
+                                    View All Notifications
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="dropdown">
+                        <button class="topbar__icon-btn" onclick="toggleDropdown('profileDropdown')" aria-label="User Profile">
+                            <i data-lucide="user" class="icon-18"></i>
+                        </button>
+                        <div class="dropdown__menu" id="profileDropdown">
+                            <a href="/" class="dropdown__item">
+                                <i data-lucide="layout-dashboard" class="icon-16"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="/accounts" class="dropdown__item">
+                                <i data-lucide="wallet" class="icon-16"></i>
+                                <span>Accounts</span>
+                            </a>
+                            <a href="/strategies" class="dropdown__item">
+                                <i data-lucide="brain" class="icon-16"></i>
+                                <span>Strategies</span>
+                            </a>
+                            <a href="/analytics" class="dropdown__item">
+                                <i data-lucide="bar-chart-3" class="icon-16"></i>
+                                <span>Analytics</span>
+                            </a>
+                            <div class="dropdown__divider"></div>
+                            <a href="/settings" class="dropdown__item">
+                                <i data-lucide="settings" class="icon-16"></i>
+                                <span>Settings</span>
+                            </a>
+                            <a href="/implementation-log" class="dropdown__item">
+                                <i data-lucide="list-checks" class="icon-16"></i>
+                                <span>Implementation Log</span>
+                            </a>
+                            <a href="/help" class="dropdown__item">
+                                <i data-lucide="help-circle" class="icon-16"></i>
+                                <span>Help</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -968,136 +1036,34 @@
                     </button>
                 </div>
 
-                <!-- Controls -->
-                <div class="controls fade-in">
-                    <select id="modeSelect">
-                        <option value="paper">Paper Trading</option>
-                        <option value="live">Live Trading</option>
-                    </select>
-
-                    <button class="btn btn-primary" onclick="startBot()">
-                        <i data-lucide="play" style="width: 16px; height: 16px;"></i>
-                        Start
-                    </button>
-                    <button class="btn btn-secondary" onclick="pauseBot()">
-                        <i data-lucide="pause" style="width: 16px; height: 16px;"></i>
-                        Pause
-                    </button>
-                    <button class="btn btn-secondary" onclick="stopBot()">
-                        <i data-lucide="square" style="width: 16px; height: 16px;"></i>
-                        Stop
-                    </button>
-                    <button class="btn btn-danger" onclick="emergencyStop()">
-                        <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i>
-                        Emergency Stop
-                    </button>
-                </div>
-
                 <!-- Alert Area -->
                 <div id="alertArea"></div>
 
-                <!-- Compact Stats Row -->
-                <div class="stats-row fade-in">
-                    <div class="stat">
-                        <div class="stat__label">DAILY P&L</div>
-                        <div class="stat__value" id="dailyPnl">₹0.00</div>
-                        <div class="stat__change stat__change--up" id="dailyChange">
-                            <i data-lucide="trending-up" style="width: 12px; height: 12px;"></i>
-                            <span>0.0%</span>
-                        </div>
+                <!-- Search and Filter Bar -->
+                <div class="search-filter-bar">
+                    <input
+                        type="text"
+                        class="search-input"
+                        id="strategySearch"
+                        placeholder="Search strategies..."
+                    >
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="active">Active</button>
+                        <button class="filter-btn" data-filter="inactive">Inactive</button>
                     </div>
-
-                    <div class="stat__divider"></div>
-
-                    <div class="stat">
-                        <div class="stat__label">TOTAL P&L</div>
-                        <div class="stat__value" id="totalPnl">₹0.00</div>
-                        <div class="stat__meta">All Time</div>
-                    </div>
-
-                    <div class="stat__divider"></div>
-
-                    <div class="stat">
-                        <div class="stat__label">WIN RATE</div>
-                        <div class="stat__value" id="winRate">0.0%</div>
-                        <div class="stat__meta" id="winStats">0/0 trades</div>
-                    </div>
-
-                    <div class="stat__divider"></div>
-
-                    <div class="stat">
-                        <div class="stat__label">TRADES</div>
-                        <div class="stat__value" id="todayTrades">0</div>
-                        <div class="stat__meta">Today</div>
-                    </div>
+                    <button class="btn btn-primary" onclick="showCreateStrategyModal()">
+                        <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+                        Create Strategy
+                    </button>
                 </div>
 
-                <!-- Compact Chart -->
-                <div class="chart-card fade-in">
-                    <div class="chart-header">
-                        <h3 class="chart-header__title">Performance Overview</h3>
-                        <div class="chart-tabs">
-                            <button class="chart-tab active">1H</button>
-                            <button class="chart-tab">1D</button>
-                            <button class="chart-tab">1W</button>
-                            <button class="chart-tab">1M</button>
-                        </div>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="performanceChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Positions & Trades -->
-                <div class="grid-2">
-                    <!-- Current Positions -->
-                    <div class="card fade-in">
-                        <div class="card__header">
-                            <h3 class="card__title">Current Positions</h3>
-                            <button class="topbar__icon-btn">
-                                <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
-                            </button>
-                        </div>
-                        <div id="positionsContent">
-                            <p style="color: var(--color-text-secondary); text-align: center; padding: var(--space-8) 0; font-size: var(--text-sm);">
-                                No active positions
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Recent Trades -->
-                    <div class="card fade-in">
-                        <div class="card__header">
-                            <h3 class="card__title">Recent Trades</h3>
-                            <button class="topbar__icon-btn">
-                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
-                            </button>
-                        </div>
-                        <div id="tradesContent">
-                            <p style="color: var(--color-text-secondary); text-align: center; padding: var(--space-8) 0; font-size: var(--text-sm);">
-                                No trades yet
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Logs -->
-                <div class="card fade-in">
-                    <div class="card__header">
-                        <h3 class="card__title">Live Logs</h3>
-                        <div class="chart-tabs">
-                            <button class="chart-tab active" onclick="switchLogTab('system')">System</button>
-                            <button class="chart-tab" onclick="switchLogTab('trades')">Trades</button>
-                            <button class="chart-tab" onclick="switchLogTab('errors')">Errors</button>
-                        </div>
-                    </div>
-                    <div class="log-viewer" id="logViewer">
-                        <div class="log-entry">
-                            <span class="log-timestamp">00:00:00</span>
-                            <span class="log-level log-level--INFO">[INFO]</span>
-                            <span>Dashboard initialized and ready</span>
-                        </div>
-                    </div>
+                <!-- Strategies Grid -->
+                <div class="strategies-grid" id="strategiesContainer">
+                    <!-- Strategies will be loaded here by JavaScript -->
+                    <p style="color: var(--color-text-secondary); text-align: center; padding: 60px 20px; grid-column: 1/-1;">
+                        Loading strategies...
+                    </p>
                 </div>
             </div>
         </main>
@@ -1107,278 +1073,6 @@
         // Initialize Lucide icons
         lucide.createIcons();
 
-        let currentLogType = 'system';
-        let performanceChart = null;
-
-        // Initialize Chart (Compact 240px height)
-        function initChart() {
-            const ctx = document.getElementById('performanceChart');
-            if (!ctx) return;
-
-            const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 240);
-            gradient.addColorStop(0, 'rgba(32, 231, 208, 0.2)');
-            gradient.addColorStop(1, 'rgba(32, 231, 208, 0)');
-
-            performanceChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['9:15', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '15:30'],
-                    datasets: [{
-                        label: 'P&L',
-                        data: [0, 150, -50, 200, 350, 300, 450, 500],
-                        borderColor: '#20E7D0',
-                        backgroundColor: gradient,
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        pointHoverBackgroundColor: '#20E7D0',
-                        pointHoverBorderColor: '#0A0E14',
-                        pointHoverBorderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            backgroundColor: 'rgba(31, 41, 55, 0.95)',
-                            titleColor: '#F9FAFB',
-                            bodyColor: '#9CA3AF',
-                            borderColor: 'rgba(255, 255, 255, 0.1)',
-                            borderWidth: 1,
-                            padding: 10,
-                            displayColors: false,
-                            titleFont: { size: 12 },
-                            bodyFont: { size: 11 }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.04)',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#6B7280',
-                                font: { size: 10 }
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.04)',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#6B7280',
-                                font: { size: 10 },
-                                callback: (value) => '₹' + value
-                            }
-                        }
-                    },
-                    interaction: {
-                        mode: 'nearest',
-                        axis: 'x',
-                        intersect: false
-                    }
-                }
-            });
-        }
-
-        // Update Dashboard
-        function updateDashboard() {
-            fetch('/api/status')
-                .then(r => r.json())
-                .then(data => {
-                    // Update status badge
-                    const badge = document.getElementById('statusBadge');
-                    badge.className = `status-badge status-badge--${data.status}`;
-                    badge.innerHTML = `
-                        <i data-lucide="circle" style="width: 8px; height: 8px; fill: currentColor;"></i>
-                        ${data.status.charAt(0).toUpperCase() + data.status.slice(1)}
-                    `;
-
-                    // Update topbar status
-                    const statusDot = document.getElementById('topbarStatusDot');
-                    const statusText = document.getElementById('topbarStatusText');
-                    if (data.status === 'running') {
-                        statusDot.className = 'topbar__status-dot topbar__status-dot--live';
-                        statusText.textContent = 'Live';
-                    } else {
-                        statusDot.className = 'topbar__status-dot topbar__status-dot--offline';
-                        statusText.textContent = 'Offline';
-                    }
-
-                    lucide.createIcons();
-
-                    // Update stats
-                    updateStatValue('dailyPnl', data.pnl.daily);
-                    updateStatValue('totalPnl', data.pnl.total);
-                    document.getElementById('winRate').textContent = data.stats.win_rate.toFixed(1) + '%';
-                    document.getElementById('winStats').textContent =
-                        `${data.stats.winning_trades}/${data.stats.total_trades} trades`;
-                    document.getElementById('todayTrades').textContent = data.stats.total_trades;
-
-                    // Update positions and trades
-                    updatePositions(data.positions);
-                    updateTrades(data.trades);
-
-                    // Hide integration banner if authenticated
-                    if (data.authenticated) {
-                        document.getElementById('integrationBanner').style.display = 'none';
-                    }
-                })
-                .catch(e => console.error('Update failed:', e));
-        }
-
-        function updateStatValue(id, value) {
-            const el = document.getElementById(id);
-            el.textContent = '₹' + value.toFixed(2);
-            if (value > 0) {
-                el.style.color = '#10B981';
-            } else if (value < 0) {
-                el.style.color = '#EF4444';
-            } else {
-                el.style.color = '#F9FAFB';
-            }
-        }
-
-        function updatePositions(positions) {
-            const content = document.getElementById('positionsContent');
-            if (!positions || positions.length === 0) {
-                content.innerHTML = '<p style="color: var(--color-text-secondary); text-align: center; padding: var(--space-8) 0; font-size: var(--text-sm);">No active positions</p>';
-                return;
-            }
-
-            let html = '<table><thead><tr><th>Symbol</th><th>Qty</th><th>Price</th><th>P&L</th></tr></thead><tbody>';
-            positions.forEach(p => {
-                const pnl = (p.current_price - p.avg_price) * p.quantity;
-                const pnlClass = pnl > 0 ? 'positive' : 'negative';
-                html += `<tr>
-                    <td class="table-symbol">${p.symbol}</td>
-                    <td>${p.quantity}</td>
-                    <td>₹${p.current_price.toFixed(2)}</td>
-                    <td class="table-pnl table-pnl--${pnlClass}">₹${pnl.toFixed(2)}</td>
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            content.innerHTML = html;
-        }
-
-        function updateTrades(trades) {
-            const content = document.getElementById('tradesContent');
-            if (!trades || trades.length === 0) {
-                content.innerHTML = '<p style="color: var(--color-text-secondary); text-align: center; padding: var(--space-8) 0; font-size: var(--text-sm);">No trades yet</p>';
-                return;
-            }
-
-            let html = '<table><thead><tr><th>Time</th><th>Symbol</th><th>Side</th><th>P&L</th></tr></thead><tbody>';
-            trades.slice(-5).reverse().forEach(t => {
-                const pnlClass = t.pnl > 0 ? 'positive' : 'negative';
-                html += `<tr>
-                    <td>${new Date(t.timestamp).toLocaleTimeString()}</td>
-                    <td class="table-symbol">${t.symbol}</td>
-                    <td>${t.action}</td>
-                    <td class="table-pnl table-pnl--${pnlClass}">₹${t.pnl.toFixed(2)}</td>
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            content.innerHTML = html;
-        }
-
-        function loadLogs() {
-            fetch(`/api/logs?type=${currentLogType}&lines=20`)
-                .then(r => r.json())
-                .then(data => {
-                    const viewer = document.getElementById('logViewer');
-                    if (!data.logs || data.logs.length === 0) return;
-
-                    let html = '';
-                    data.logs.forEach(log => {
-                        if (log.timestamp) {
-                            html += `<div class="log-entry">
-                                <span class="log-timestamp">${new Date(log.timestamp).toLocaleTimeString()}</span>
-                                <span class="log-level log-level--${log.level}">[${log.level}]</span>
-                                <span>${log.message}</span>
-                            </div>`;
-                        }
-                    });
-                    viewer.innerHTML = html;
-                })
-                .catch(e => console.error('Log load failed:', e));
-        }
-
-        function switchLogTab(type) {
-            currentLogType = type;
-            const buttons = document.querySelectorAll('.card__header .chart-tabs .chart-tab');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            loadLogs();
-        }
-
-        function showAlert(message, type) {
-            const area = document.getElementById('alertArea');
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type} fade-in`;
-            alert.innerHTML = `
-                <i data-lucide="${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'alert-triangle'}" style="width: 18px; height: 18px;"></i>
-                <span>${message}</span>
-            `;
-            area.appendChild(alert);
-            lucide.createIcons();
-            setTimeout(() => alert.remove(), 5000);
-        }
-
-        function startBot() {
-            const mode = document.getElementById('modeSelect').value;
-            if (mode === 'live' && !confirm('⚠️ Start LIVE trading with real money?')) return;
-
-            fetch('/api/start', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({mode})
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) showAlert(data.message, 'success');
-                else showAlert(data.error, 'error');
-                updateDashboard();
-            });
-        }
-
-        function pauseBot() {
-            fetch('/api/pause', {method: 'POST'})
-                .then(r => r.json())
-                .then(data => {
-                    showAlert(data.success ? data.message : data.error, data.success ? 'success' : 'error');
-                    updateDashboard();
-                });
-        }
-
-        function stopBot() {
-            fetch('/api/stop', {method: 'POST'})
-                .then(r => r.json())
-                .then(data => {
-                    showAlert(data.success ? data.message : data.error, data.success ? 'success' : 'error');
-                    updateDashboard();
-                });
-        }
-
-        function emergencyStop() {
-            if (!confirm('🛑 EMERGENCY STOP\n\nThis will cancel all orders and close all positions!\n\nAre you sure?')) return;
-
-            fetch('/api/emergency-stop', {method: 'POST'})
-                .then(r => r.json())
-                .then(data => {
-                    showAlert(data.success ? data.message : data.error, data.success ? 'warning' : 'error');
-                    updateDashboard();
-                });
-        }
-
         // Mobile sidebar toggle
         function toggleMobileSidebar() {
             const sidebar = document.querySelector('.sidebar');
@@ -1387,22 +1081,18 @@
             hamburger.classList.toggle('active');
         }
 
-        // Initialize
-        window.onload = () => {
-            initChart();
-            updateDashboard();
-            loadLogs();
-
-            // Hide sidebar on mobile by default
-            if (window.innerWidth <= 768) {
+        // Hide sidebar on mobile by default
+        if (window.innerWidth <= 768) {
+            document.addEventListener('DOMContentLoaded', function() {
                 document.querySelector('.sidebar').classList.add('mobile-hidden');
-            }
-
-            setInterval(() => {
-                updateDashboard();
-                loadLogs();
-            }, 2000);
-        };
+            });
+        }
     </script>
+
+    <!-- Toast Notification System -->
+    <script src="/static/js/toast.js"></script>
+
+    <!-- Strategies Page JavaScript -->
+    <script src="/static/js/strategies.js"></script>
 </body>
 </html>

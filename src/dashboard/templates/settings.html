@@ -6,10 +6,42 @@
     <title>Scalping Bot - Settings & Configuration</title>
 
     <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest">
+
+        // Initialize top bar on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Restore saved portfolio
+            const savedPortfolio = localStorage.getItem('selectedPortfolio') || '1';
+            const selector = document.getElementById('topbar-account-selector');
+            if (selector) {
+                selector.value = savedPortfolio;
+            }
+
+            // Mark current page as active
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href === currentPath || (currentPath === '/' && href === '/')) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Load funds
+            loadTopBarFunds();
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+
+    </script>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Settings Page Styles -->
+    <link rel="stylesheet" href="/static/css/settings.css">
 
     <style>
         /* Ultra-Compact Design Tokens v2.1 */
@@ -183,7 +215,7 @@
         /* Main Content */
         .main {
             flex: 1;
-            margin-left: 240px;
+            margin-left: 0;
             display: flex;
             flex-direction: column;
         }
@@ -848,60 +880,50 @@
                 height: 200px;
             }
         }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .topbar {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 12px;
+            }
+
+            .topbar-nav {
+                order: 3;
+                width: 100%;
+                margin-top: 12px;
+                justify-content: flex-start;
+                overflow-x: auto;
+            }
+
+            .topbar-actions {
+                gap: 8px;
+            }
+
+            .funds-label,
+            .topbar-status {
+                display: none;
+            }
+        }
+
     </style>
 </head>
 <body>
     <div class="app">
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar__logo">
-                <div class="sidebar__logo-icon">S</div>
-                <span class="sidebar__logo-text">Scalping Bot</span>
-            </div>
-
-            <nav style="flex: 1;">
-                <a href="/" class="nav-item">
-                    <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/accounts" class="nav-item">
-                    <i data-lucide="wallet" style="width: 18px; height: 18px;"></i>
-                    <span>Accounts</span>
-                </a>
-                <a href="/strategies" class="nav-item">
-                    <i data-lucide="brain" style="width: 18px; height: 18px;"></i>
-                    <span>Strategies</span>
-                </a>
-                <a href="/analytics" class="nav-item">
-                    <i data-lucide="bar-chart-3" style="width: 18px; height: 18px;"></i>
-                    <span>Analytics</span>
-                </a>
-
-                <div class="nav-divider"></div>
-
-                <a href="/notifications" class="nav-item">
-                    <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
-                    <span>Notifications</span>
-                </a>
-                <a href="/settings" class="nav-item active">
-                    <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
-                    <span>Settings</span>
-                </a>
-            </nav>
-
-            <div>
-                <a href="/help" class="nav-item">
-                    <i data-lucide="help-circle" style="width: 18px; height: 18px;"></i>
-                    <span>Help</span>
-                </a>
-            </div>
-        </aside>
+        
 
         <!-- Main Content -->
         <main class="main">
             <!-- Top Bar -->
             <header class="topbar">
                 <div class="topbar__left">
+                    <!-- Logo -->
+                    <a href="/" class="topbar__logo" style="text-decoration: none; color: inherit; cursor: pointer;">
+                        <div class="topbar__logo-icon">S</div>
+                        <span>Scalping Bot</span>
+                    </a>
                     <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">
                         <div class="hamburger__line"></div>
                         <div class="hamburger__line"></div>
@@ -926,20 +948,66 @@
                 </div>
 
                 <div class="topbar__right">
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
-                        <span class="topbar__badge">0</span>
-                    </button>
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
-                    </button>
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="user" style="width: 18px; height: 18px;"></i>
-                    </button>
+                    <!-- Notification Dropdown -->
+                    <div class="dropdown">
+                        <button class="topbar__icon-btn" onclick="toggleDropdown('notificationDropdown')" aria-label="Notifications">
+                            <i data-lucide="bell" class="icon-18"></i>
+                            <span class="topbar__badge" id="notification-count">0</span>
+                        </button>
+                        <div class="dropdown__menu notification-dropdown" id="notificationDropdown">
+                            <div class="dropdown__header">Notifications</div>
+                            <div class="notification-empty" id="notificationList">
+                                No new notifications
+                            </div>
+                            <div class="notification-footer">
+                                <button class="notification-footer__btn" onclick="window.location.href='/notifications'">
+                                    View All Notifications
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="dropdown">
+                        <button class="topbar__icon-btn" onclick="toggleDropdown('profileDropdown')" aria-label="User Profile">
+                            <i data-lucide="user" class="icon-18"></i>
+                        </button>
+                        <div class="dropdown__menu" id="profileDropdown">
+                            <a href="/" class="dropdown__item">
+                                <i data-lucide="layout-dashboard" class="icon-16"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="/accounts" class="dropdown__item">
+                                <i data-lucide="wallet" class="icon-16"></i>
+                                <span>Accounts</span>
+                            </a>
+                            <a href="/strategies" class="dropdown__item">
+                                <i data-lucide="brain" class="icon-16"></i>
+                                <span>Strategies</span>
+                            </a>
+                            <a href="/analytics" class="dropdown__item">
+                                <i data-lucide="bar-chart-3" class="icon-16"></i>
+                                <span>Analytics</span>
+                            </a>
+                            <div class="dropdown__divider"></div>
+                            <a href="/settings" class="dropdown__item">
+                                <i data-lucide="settings" class="icon-16"></i>
+                                <span>Settings</span>
+                            </a>
+                            <a href="/implementation-log" class="dropdown__item">
+                                <i data-lucide="list-checks" class="icon-16"></i>
+                                <span>Implementation Log</span>
+                            </a>
+                            <a href="/help" class="dropdown__item">
+                                <i data-lucide="help-circle" class="icon-16"></i>
+                                <span>Help</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </header>
 
-            <!-- Content Area -->
+                        <!-- Content Area -->
             <div class="content">
                 <!-- Header -->
                 <div class="header">
@@ -947,158 +1015,373 @@
                         <h1 class="header__title">Settings & Configuration</h1>
                         <p class="header__subtitle">Configure trading parameters and system preferences</p>
                     </div>
-                    <span class="status-badge status-badge--stopped" id="statusBadge">
-                        <i data-lucide="circle" style="width: 8px; height: 8px; fill: currentColor;"></i>
-                        Stopped
-                    </span>
-                </div>
-
-                <!-- Integration Banner -->
-                <div class="integration-banner" id="integrationBanner">
-                    <div class="integration-banner__icon">
-                        <i data-lucide="alert-triangle" style="width: 20px; height: 20px;"></i>
+                    <div style="display: flex; gap: var(--space-4); align-items: center;">
+                        <button class="btn btn-secondary" onclick="window.location.href='/implementation-log'">
+                            <i data-lucide="list-checks" style="width: 16px; height: 16px;"></i>
+                            Implementation Log
+                        </button>
                     </div>
-                    <div class="integration-banner__content">
-                        <h4 class="integration-banner__title">Authentication Required</h4>
-                        <p class="integration-banner__message">Connect to Zerodha to start trading with real-time data</p>
-                    </div>
-                    <button class="btn btn-primary">
-                        <i data-lucide="link" style="width: 16px; height: 16px;"></i>
-                        Connect Now
-                    </button>
-                </div>
-
-                <!-- Controls -->
-                <div class="controls fade-in">
-                    <select id="modeSelect">
-                        <option value="paper">Paper Trading</option>
-                        <option value="live">Live Trading</option>
-                    </select>
-
-                    <button class="btn btn-primary" onclick="startBot()">
-                        <i data-lucide="play" style="width: 16px; height: 16px;"></i>
-                        Start
-                    </button>
-                    <button class="btn btn-secondary" onclick="pauseBot()">
-                        <i data-lucide="pause" style="width: 16px; height: 16px;"></i>
-                        Pause
-                    </button>
-                    <button class="btn btn-secondary" onclick="stopBot()">
-                        <i data-lucide="square" style="width: 16px; height: 16px;"></i>
-                        Stop
-                    </button>
-                    <button class="btn btn-danger" onclick="emergencyStop()">
-                        <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i>
-                        Emergency Stop
-                    </button>
                 </div>
 
                 <!-- Alert Area -->
                 <div id="alertArea"></div>
 
-                <!-- Compact Stats Row -->
-                <div class="stats-row fade-in">
-                    <div class="stat">
-                        <div class="stat__label">DAILY P&L</div>
-                        <div class="stat__value" id="dailyPnl">₹0.00</div>
-                        <div class="stat__change stat__change--up" id="dailyChange">
-                            <i data-lucide="trending-up" style="width: 12px; height: 12px;"></i>
-                            <span>0.0%</span>
-                        </div>
-                    </div>
-
-                    <div class="stat__divider"></div>
-
-                    <div class="stat">
-                        <div class="stat__label">TOTAL P&L</div>
-                        <div class="stat__value" id="totalPnl">₹0.00</div>
-                        <div class="stat__meta">All Time</div>
-                    </div>
-
-                    <div class="stat__divider"></div>
-
-                    <div class="stat">
-                        <div class="stat__label">WIN RATE</div>
-                        <div class="stat__value" id="winRate">0.0%</div>
-                        <div class="stat__meta" id="winStats">0/0 trades</div>
-                    </div>
-
-                    <div class="stat__divider"></div>
-
-                    <div class="stat">
-                        <div class="stat__label">TRADES</div>
-                        <div class="stat__value" id="todayTrades">0</div>
-                        <div class="stat__meta">Today</div>
-                    </div>
+                <!-- Settings Tabs -->
+                <div class="settings-tabs">
+                    <button class="settings-tab active" onclick="switchTab('trading')">
+                        <i data-lucide="trending-up" style="width: 16px; height: 16px;"></i>
+                        Trading
+                    </button>
+                    <button class="settings-tab" onclick="switchTab('risk')">
+                        <i data-lucide="shield" style="width: 16px; height: 16px;"></i>
+                        Risk Management
+                    </button>
+                    <button class="settings-tab" onclick="switchTab('broker')">
+                        <i data-lucide="link" style="width: 16px; height: 16px;"></i>
+                        Broker
+                    </button>
+                    <button class="settings-tab" onclick="switchTab('alerts')">
+                        <i data-lucide="bell" style="width: 16px; height: 16px;"></i>
+                        Alerts
+                    </button>
                 </div>
 
-                <!-- Compact Chart -->
-                <div class="chart-card fade-in">
-                    <div class="chart-header">
-                        <h3 class="chart-header__title">Performance Overview</h3>
-                        <div class="chart-tabs">
-                            <button class="chart-tab active">1H</button>
-                            <button class="chart-tab">1D</button>
-                            <button class="chart-tab">1W</button>
-                            <button class="chart-tab">1M</button>
-                        </div>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="performanceChart"></canvas>
-                    </div>
-                </div>
+                <!-- Trading Settings Tab -->
+                <div id="trading-tab" class="settings-panel active">
+                    <form id="tradingSettingsForm" onsubmit="saveTradingSettings(event)">
+                        <div class="settings-section">
+                            <h3 class="settings-section__title">Trading Mode</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Select Mode *</label>
+                                <select class="form-input" id="tradingMode" name="mode" required>
+                                    <option value="paper">Paper Trading (Simulated)</option>
+                                    <option value="live">Live Trading (Real Money)</option>
+                                </select>
+                                <small class="form-hint">Paper trading uses simulated money for testing strategies</small>
+                            </div>
 
-                <!-- Positions & Trades -->
-                <div class="grid-2">
-                    <!-- Current Positions -->
-                    <div class="card fade-in">
-                        <div class="card__header">
-                            <h3 class="card__title">Current Positions</h3>
-                            <button class="topbar__icon-btn">
-                                <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
+                            <div class="form-group">
+                                <label class="form-label">Default Exchange *</label>
+                                <select class="form-input" id="defaultExchange" name="exchange" required>
+                                    <option value="NSE">NSE (National Stock Exchange)</option>
+                                    <option value="BSE">BSE (Bombay Stock Exchange)</option>
+                                    <option value="MCX">MCX (Multi Commodity Exchange)</option>
+                                    <option value="NFO">NFO (NSE Futures & Options)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="settings-section__title">Market Hours</h3>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Pre-Market Start</label>
+                                    <input type="time" class="form-input" id="preMarketStart" name="pre_market_start" value="09:00">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Pre-Market End</label>
+                                    <input type="time" class="form-input" id="preMarketEnd" name="pre_market_end" value="09:15">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Regular Market Start</label>
+                                    <input type="time" class="form-input" id="marketStart" name="market_start" value="09:15">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Regular Market End</label>
+                                    <input type="time" class="form-input" id="marketEnd" name="market_end" value="15:30">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="settings-section__title">Automation</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" id="autoStart" name="auto_start">
+                                    <span>Auto-start trading on application launch</span>
+                                </label>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" id="autoStop" name="auto_stop" checked>
+                                    <span>Auto-stop trading at market close</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button type="button" class="btn btn-secondary" onclick="loadAllSettings()">
+                                <i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i>
+                                Reset
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="save" style="width: 16px; height: 16px;"></i>
+                                Save Trading Settings
                             </button>
                         </div>
-                        <div id="positionsContent">
-                            <p style="color: var(--color-text-secondary); text-align: center; padding: var(--space-8) 0; font-size: var(--text-sm);">
-                                No active positions
-                            </p>
-                        </div>
-                    </div>
+                    </form>
+                </div>
 
-                    <!-- Recent Trades -->
-                    <div class="card fade-in">
-                        <div class="card__header">
-                            <h3 class="card__title">Recent Trades</h3>
-                            <button class="topbar__icon-btn">
-                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                <!-- Risk Management Tab -->
+                <div id="risk-tab" class="settings-panel">
+                    <form id="riskSettingsForm" onsubmit="saveRiskSettings(event)">
+                        <div class="settings-section">
+                            <h3 class="settings-section__title">Capital Management</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Total Capital Allocated (₹) *</label>
+                                <input type="number" class="form-input" id="totalCapital" name="total_capital" 
+                                    min="10000" step="1000" value="100000" required>
+                                <small class="form-hint">Total capital available for trading</small>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Max Capital Per Trade (%)</label>
+                                    <input type="number" class="form-input" id="maxCapitalPerTrade" name="max_capital_per_trade" 
+                                        min="1" max="100" step="1" value="10">
+                                    <small class="form-hint">Maximum % of capital per single trade</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Max Daily Loss (%)</label>
+                                    <input type="number" class="form-input" id="maxDailyLoss" name="max_daily_loss" 
+                                        min="1" max="100" step="0.5" value="5">
+                                    <small class="form-hint">Stop trading if daily loss exceeds this %</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="settings-section__title">Position Sizing</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Position Sizing Method *</label>
+                                <select class="form-input" id="positionSizingMethod" name="position_sizing_method" required>
+                                    <option value="fixed">Fixed Amount</option>
+                                    <option value="percentage">Percentage of Capital</option>
+                                    <option value="kelly">Kelly Criterion</option>
+                                    <option value="atr">ATR-Based</option>
+                                    <option value="volatility">Volatility-Adjusted</option>
+                                </select>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Max Position Size (₹)</label>
+                                    <input type="number" class="form-input" id="maxPositionSize" name="max_position_size" 
+                                        min="1000" step="1000" value="50000">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Max Total Positions</label>
+                                    <input type="number" class="form-input" id="maxPositions" name="max_positions" 
+                                        min="1" max="50" value="5">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="settings-section__title">Stop Loss & Targets</h3>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Global Stop Loss (%)</label>
+                                    <input type="number" class="form-input" id="globalStopLoss" name="global_stop_loss" 
+                                        min="0.1" max="10" step="0.1" value="2.0">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Global Target (%)</label>
+                                    <input type="number" class="form-input" id="globalTarget" name="global_target" 
+                                        min="0.1" max="20" step="0.1" value="4.0">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" id="trailingStopLoss" name="trailing_stop_loss">
+                                    <span>Enable Trailing Stop Loss</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button type="button" class="btn btn-secondary" onclick="loadAllSettings()">
+                                <i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i>
+                                Reset
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="save" style="width: 16px; height: 16px;"></i>
+                                Save Risk Settings
                             </button>
                         </div>
-                        <div id="tradesContent">
-                            <p style="color: var(--color-text-secondary); text-align: center; padding: var(--space-8) 0; font-size: var(--text-sm);">
-                                No trades yet
-                            </p>
-                        </div>
-                    </div>
+                    </form>
                 </div>
 
-                <!-- Logs -->
-                <div class="card fade-in">
-                    <div class="card__header">
-                        <h3 class="card__title">Live Logs</h3>
-                        <div class="chart-tabs">
-                            <button class="chart-tab active" onclick="switchLogTab('system')">System</button>
-                            <button class="chart-tab" onclick="switchLogTab('trades')">Trades</button>
-                            <button class="chart-tab" onclick="switchLogTab('errors')">Errors</button>
+                <!-- Broker Tab -->
+                <div id="broker-tab" class="settings-panel">
+                    <form id="brokerSettingsForm" onsubmit="saveBrokerSettings(event)">
+                        <div class="settings-section">
+                            <h3 class="settings-section__title">Broker Selection</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Primary Broker *</label>
+                                <select class="form-input" id="primaryBroker" name="broker_name" required>
+                                    <option value="zerodha">Zerodha Kite</option>
+                                    <option value="upstox">Upstox</option>
+                                    <option value="angel">Angel One</option>
+                                    <option value="icici">ICICI Direct</option>
+                                    <option value="5paisa">5Paisa</option>
+                                    <option value="fyers">Fyers</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    <div class="log-viewer" id="logViewer">
-                        <div class="log-entry">
-                            <span class="log-timestamp">00:00:00</span>
-                            <span class="log-level log-level--INFO">[INFO]</span>
-                            <span>Dashboard initialized and ready</span>
+
+                        <div class="settings-section">
+                            <h3 class="settings-section__title">API Credentials</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">API Key *</label>
+                                <input type="text" class="form-input" id="apiKey" name="api_key" 
+                                    placeholder="Enter your API key" required>
+                                <small class="form-hint">Get this from your broker's API section</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">API Secret *</label>
+                                <input type="password" class="form-input" id="apiSecret" name="api_secret" 
+                                    placeholder="Enter your API secret" required>
+                                <small class="form-hint">Keep this confidential - it will be encrypted</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">User ID</label>
+                                <input type="text" class="form-input" id="brokerId" name="user_id" 
+                                    placeholder="Your broker user ID">
+                            </div>
                         </div>
-                    </div>
+
+                        <div class="settings-section">
+                            <h3 class="settings-section__title">Connection</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" id="autoLogin" name="auto_login">
+                                    <span>Auto-login on application start</span>
+                                </label>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" id="autoReconnect" name="auto_reconnect" checked>
+                                    <span>Auto-reconnect on disconnect</span>
+                                </label>
+                            </div>
+
+                            <button type="button" class="btn btn-secondary" onclick="testBrokerConnection()">
+                                <i data-lucide="zap" style="width: 16px; height: 16px;"></i>
+                                Test Connection
+                            </button>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button type="button" class="btn btn-secondary" onclick="loadAllSettings()">
+                                <i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i>
+                                Reset
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="save" style="width: 16px; height: 16px;"></i>
+                                Save Broker Settings
+                            </button>
+                        </div>
+                    </form>
                 </div>
+
+                <!-- Alerts Tab -->
+                <div id="alerts-tab" class="settings-panel">
+                    <form id="alertsSettingsForm" onsubmit="saveAlertsSettings(event)">
+                        <div class="settings-section">
+                            <h3 class="settings-section__title">Telegram Notifications</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" id="telegramEnabled" name="telegram_enabled">
+                                    <span>Enable Telegram Notifications</span>
+                                </label>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Bot Token</label>
+                                <input type="text" class="form-input" id="telegramBotToken" name="telegram_bot_token" 
+                                    placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz">
+                                <small class="form-hint">Get from @BotFather on Telegram</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Chat ID</label>
+                                <input type="text" class="form-input" id="telegramChatId" name="telegram_chat_id" 
+                                    placeholder="123456789">
+                                <small class="form-hint">Your Telegram chat ID</small>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="settings-section__title">Alert Types</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" id="alertTradeExecuted" name="alert_trade" checked>
+                                    <span>Trade Executed</span>
+                                </label>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" id="alertStopLoss" name="alert_stop_loss" checked>
+                                    <span>Stop Loss Hit</span>
+                                </label>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" id="alertTarget" name="alert_target" checked>
+                                    <span>Target Achieved</span>
+                                </label>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" id="alertError" name="alert_error" checked>
+                                    <span>Error Occurred</span>
+                                </label>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" id="alertDailySummary" name="alert_daily_summary">
+                                    <span>Daily Summary (End of Day)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button type="button" class="btn btn-secondary" onclick="loadAllSettings()">
+                                <i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i>
+                                Reset
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="save" style="width: 16px; height: 16px;"></i>
+                                Save Alert Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
             </div>
         </main>
     </div>
@@ -1404,5 +1687,8 @@
             }, 2000);
         };
     </script>
+
+    <!-- Settings Page JavaScript (for future tabbed interface) -->
+    <script src="/static/js/settings.js"></script>
 </body>
 </html>

@@ -3,33 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>Scalping Bot - Ultra-Compact Dashboard</title>
 
     <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest">
+
+        // Initialize top bar on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Restore saved portfolio
+            const savedPortfolio = localStorage.getItem('selectedPortfolio') || '1';
+            const selector = document.getElementById('topbar-account-selector');
+            if (selector) {
+                selector.value = savedPortfolio;
+            }
+
+            // Mark current page as active
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href === currentPath || (currentPath === '/' && href === '/')) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Load funds
+            loadTopBarFunds();
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+
+    </script>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+    <!-- Lightweight Charts for Candlesticks -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+
+    <!-- OMS Client for Real-Time Updates -->
+    <script src="{{ url_for('static', filename='js/oms-client.js') }}"></script>
+
     <style>
         /* Ultra-Compact Design Tokens v2.1 */
         :root {
-            /* Colors */
-            --color-bg-primary: #0A0E14;
-            --color-bg-secondary: #161B22;
-            --color-bg-tertiary: #1F2937;
+            /* Colors - Updated to match Groww/Zerodha aesthetic */
+            --color-bg-primary: #0F1014;        /* Deeper black */
+            --color-bg-secondary: #1C1E26;      /* Sidebar/cards solid */
+            --color-bg-tertiary: #2A2D3A;       /* Hover states */
 
-            --color-accent-primary: #20E7D0;
-            --color-accent-secondary: #7C3AED;
+            --color-accent-primary: #00C9A7;    /* Teal (Groww-style) */
+            --color-accent-secondary: #6C63FF;  /* Purple accent */
 
-            --color-success: #10B981;
-            --color-error: #EF4444;
-            --color-warning: #F59E0B;
-            --color-info: #3B82F6;
+            --color-success: #00D09C;           /* Brighter profit green */
+            --color-error: #FF5252;             /* Brighter loss red */
+            --color-warning: #FFB946;           /* Brighter warning */
+            --color-info: #4A9EFF;              /* Brighter info blue */
 
             --color-text-primary: #F9FAFB;
             --color-text-secondary: #9CA3AF;
-            --color-text-tertiary: #6B7280;
+            --color-text-tertiary: #9CA3AF;  /* Changed from #6B7280 for WCAG AA compliance (4.8:1 contrast ratio) */
 
             --color-border: rgba(255, 255, 255, 0.08);
             --glass-bg: rgba(31, 41, 55, 0.6);
@@ -95,30 +131,134 @@
             line-height: 1.4;
         }
 
+        /* Accessibility Utilities */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus Visible Styles - WCAG 2.1 Compliance */
+        *:focus-visible {
+            outline: 2px solid var(--color-accent-primary);
+            outline-offset: 2px;
+            border-radius: var(--radius-sm);
+        }
+
+        button:focus-visible,
+        a:focus-visible,
+        select:focus-visible,
+        input:focus-visible {
+            outline: 2px solid var(--color-accent-primary);
+            outline-offset: 2px;
+        }
+
+        /* Skip to main content link (for keyboard navigation) */
+        .skip-to-main {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--color-accent-primary);
+            color: var(--color-bg-primary);
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            z-index: 1000;
+        }
+
+        .skip-to-main:focus {
+            top: 10px;
+            left: 10px;
+        }
+
+        /* Icon Size Utilities */
+        .icon-8 {
+            width: 8px;
+            height: 8px;
+        }
+
+        .icon-12 {
+            width: 12px;
+            height: 12px;
+        }
+
+        .icon-14 {
+            width: 14px;
+            height: 14px;
+        }
+
+        .icon-16 {
+            width: 16px;
+            height: 16px;
+        }
+
+        .icon-18 {
+            width: 18px;
+            height: 18px;
+        }
+
+        .icon-20 {
+            width: 20px;
+            height: 20px;
+        }
+
+        .icon-fill {
+            fill: currentColor;
+        }
+
+        .icon-accent {
+            color: var(--color-accent-primary);
+        }
+
+        .icon-tertiary {
+            color: var(--color-text-tertiary);
+        }
+
+        /* Empty State Utility */
+        .empty-state {
+            color: var(--color-text-tertiary);
+            text-align: center;
+            padding: var(--space-4) 0;
+            font-size: var(--text-xs);
+        }
+
+        .empty-state--large {
+            padding: var(--space-8) 0;
+            font-size: var(--text-sm);
+        }
+
         .app {
             display: flex;
             min-height: 100vh;
         }
 
-        /* Sidebar (Compact) */
+        /* Sidebar (Removed - Using topbar-only layout) */
         .sidebar {
-            width: 240px;
-            background: var(--glass-bg-medium);
-            backdrop-filter: var(--glass-blur-medium);
-            -webkit-backdrop-filter: var(--glass-blur-medium);
-            border-right: 1px solid var(--glass-border-light);
+            display: none !important; /* Completely hidden - navigation moved to topbar */
+            width: 0;
+            background: var(--color-bg-secondary);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
             position: fixed;
             height: 100vh;
             padding: var(--space-6);
             display: flex;
             flex-direction: column;
             z-index: 100;
-            box-shadow: var(--glass-shadow-md);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
             transition: transform 300ms ease-in-out;
         }
 
-        .sidebar.mobile-hidden {
-            transform: translateX(-100%);
+        /* Mobile-hidden only applies on mobile screens */
+        @media (max-width: 768px) {
+            .sidebar.mobile-hidden {
+                transform: translateX(-100%);
+            }
         }
 
         .sidebar__logo {
@@ -180,10 +320,10 @@
             margin: var(--space-5) 0;
         }
 
-        /* Main Content */
+        /* Main Content (Full Width - No Sidebar) */
         .main {
             flex: 1;
-            margin-left: 240px;
+            margin-left: 0; /* No sidebar, full width */
             display: flex;
             flex-direction: column;
         }
@@ -211,6 +351,7 @@
         }
 
         .hamburger {
+            display: none !important; /* Not needed without sidebar */
             display: none;
             width: 32px;
             height: 32px;
@@ -371,6 +512,201 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+
+        /* Logo on Topbar (NEW) */
+        .topbar__logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-weight: 600;
+            font-size: var(--text-base);
+            color: var(--color-text-primary);
+            margin-right: var(--space-6);
+        }
+
+        .topbar__logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--color-accent-primary);
+            color: var(--color-bg-primary);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: var(--text-base);
+        }
+
+        /* Dropdown Menu System (NEW) */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown__menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 240px;
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            padding: var(--space-2);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dropdown__menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown__item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            transition: all 150ms;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+        }
+
+        .dropdown__item:hover {
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-primary);
+        }
+
+        .dropdown__item.active {
+            background: rgba(0, 201, 167, 0.1);
+            color: var(--color-accent-primary);
+        }
+
+        .dropdown__divider {
+            height: 1px;
+            background: var(--color-border);
+            margin: var(--space-2) 0;
+        }
+
+        .dropdown__header {
+            padding: var(--space-3) var(--space-4);
+            font-size: var(--text-xs);
+            font-weight: 600;
+            color: var(--color-text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            min-width: 360px;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            display: flex;
+            gap: var(--space-3);
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            transition: background 150ms;
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background: var(--color-bg-tertiary);
+        }
+
+        .notification-item__icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .notification-item__icon--success {
+            background: rgba(0, 208, 156, 0.1);
+            color: var(--color-success);
+        }
+
+        .notification-item__icon--error {
+            background: rgba(255, 82, 82, 0.1);
+            color: var(--color-error);
+        }
+
+        .notification-item__icon--info {
+            background: rgba(74, 158, 255, 0.1);
+            color: var(--color-info);
+        }
+
+        .notification-item__content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notification-item__title {
+            font-size: var(--text-sm);
+            font-weight: 500;
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-1);
+        }
+
+        .notification-item__message {
+            font-size: var(--text-xs);
+            color: var(--color-text-secondary);
+            line-height: 1.4;
+        }
+
+        .notification-item__time {
+            font-size: var(--text-2xs);
+            color: var(--color-text-tertiary);
+            margin-top: var(--space-1);
+        }
+
+        .notification-empty {
+            padding: var(--space-8) var(--space-4);
+            text-align: center;
+            color: var(--color-text-tertiary);
+            font-size: var(--text-sm);
+        }
+
+        .notification-footer {
+            padding: var(--space-3);
+            border-top: 1px solid var(--color-border);
+            margin-top: var(--space-2);
+        }
+
+        .notification-footer__btn {
+            width: 100%;
+            padding: var(--space-3);
+            background: var(--color-bg-tertiary);
+            border: none;
+            border-radius: var(--radius-md);
+            color: var(--color-accent-primary);
+            font-size: var(--text-sm);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms;
+        }
+
+        .notification-footer__btn:hover {
+            background: rgba(0, 201, 167, 0.1);
         }
 
         /* Content Area */
@@ -800,15 +1136,395 @@
             background: var(--color-border);
         }
 
+        /* Pattern Recognition Widget Styles */
+        .pattern-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4) var(--space-5);
+            background: var(--glass-bg-light);
+            border: 1px solid var(--glass-border-light);
+            border-radius: var(--radius-md);
+            transition: all 200ms;
+        }
+
+        .pattern-item:hover {
+            background: var(--glass-bg-medium);
+            border-color: var(--color-accent-primary);
+            transform: translateX(2px);
+        }
+
+        .pattern-item--bullish_reversal,
+        .pattern-item--bullish {
+            border-left: 3px solid var(--color-success);
+        }
+
+        .pattern-item--bearish_reversal,
+        .pattern-item--bearish {
+            border-left: 3px solid var(--color-error);
+        }
+
+        .pattern-item--indecision,
+        .pattern-item--continuation {
+            border-left: 3px solid var(--color-warning);
+        }
+
+        .pattern-item__info {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+            flex: 1;
+        }
+
+        .pattern-item__name {
+            font-size: var(--text-base);
+            font-weight: 600;
+            color: var(--color-text-primary);
+            text-transform: capitalize;
+        }
+
+        .pattern-item__type {
+            font-size: var(--text-2xs);
+            color: var(--color-text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pattern-item__description {
+            font-size: var(--text-xs);
+            color: var(--color-text-secondary);
+            margin-top: var(--space-1);
+            line-height: 1.4;
+        }
+
+        .pattern-item__confidence {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: var(--space-2);
+            min-width: 80px;
+        }
+
+        .confidence-bar-container {
+            width: 60px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .confidence-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-accent-primary), var(--color-accent-secondary));
+            border-radius: 2px;
+            transition: width 300ms ease-out;
+        }
+
+        .pattern-item__confidence-value {
+            font-size: var(--text-xs);
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            font-family: var(--font-mono);
+        }
+
+        /* Indicator Chips */
+        .indicator-chip {
+            display: flex;
+            flex-direction: column;
+            padding: var(--space-4) var(--space-5);
+            background: var(--glass-bg-light);
+            border: 1px solid var(--glass-border-light);
+            border-radius: var(--radius-md);
+            transition: all 200ms;
+        }
+
+        .indicator-chip:hover {
+            background: var(--glass-bg-medium);
+            transform: translateY(-2px);
+        }
+
+        .indicator-chip--bullish {
+            border-left: 3px solid var(--color-success);
+        }
+
+        .indicator-chip--bearish {
+            border-left: 3px solid var(--color-error);
+        }
+
+        .indicator-chip--neutral {
+            border-left: 3px solid var(--color-text-tertiary);
+        }
+
+        .indicator-chip__name {
+            font-size: var(--text-2xs);
+            font-weight: 600;
+            color: var(--color-text-tertiary);
+            letter-spacing: 0.5px;
+            margin-bottom: var(--space-2);
+            text-transform: uppercase;
+        }
+
+        .indicator-chip__signal {
+            font-size: var(--text-sm);
+            color: var(--color-text-primary);
+            text-transform: capitalize;
+            font-weight: 500;
+        }
+
+        /* Chart with Overlay Layout */
+        .chart-with-overlay {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .chart-main-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--card-padding-lg);
+        }
+
+        .chart-main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-5);
+        }
+
+        .chart-main-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .chart-symbol {
+            font-size: var(--text-xl);
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+
+        .chart-timeframe {
+            font-size: var(--text-sm);
+            color: var(--color-text-tertiary);
+        }
+
+        .chart-price-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: var(--space-1);
+        }
+
+        .chart-current-price {
+            font-size: var(--text-2xl);
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-success);
+        }
+
+        .chart-price-change {
+            font-size: var(--text-sm);
+            font-weight: 600;
+            color: var(--color-success);
+        }
+
+        .chart-container-wrapper {
+            height: 450px;
+            position: relative;
+        }
+
+        #candlestickChart {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Pattern Overlay Compact */
+        .pattern-overlay-compact {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--card-padding-lg);
+            height: fit-content;
+            max-height: 580px;
+            overflow-y: auto;
+            position: sticky;
+            top: var(--space-6);
+        }
+
+        .overlay-header-compact {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-4);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .overlay-title-compact {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: var(--text-lg);
+            font-weight: 600;
+        }
+
+        .overlay-count {
+            font-size: var(--text-xs);
+            color: var(--color-text-tertiary);
+        }
+
+        .overlay-section-compact {
+            margin-bottom: var(--space-5);
+        }
+
+        .overlay-section-compact:last-child {
+            margin-bottom: 0;
+        }
+
+        .overlay-section-title {
+            font-size: var(--text-2xs);
+            font-weight: 700;
+            color: var(--color-text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--space-3);
+        }
+
+        /* Compact Pattern Cards */
+        .pattern-compact {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid var(--color-success);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-2);
+            transition: all 150ms;
+            cursor: pointer;
+        }
+
+        .pattern-compact:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateX(2px);
+        }
+
+        .pattern-compact--bullish {
+            border-left-color: var(--color-success);
+        }
+
+        .pattern-compact--bearish {
+            border-left-color: var(--color-error);
+        }
+
+        .pattern-compact--indecision {
+            border-left-color: var(--color-warning);
+        }
+
+        .pattern-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .pattern-compact-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .pattern-compact-name {
+            font-size: var(--text-sm);
+            font-weight: 600;
+            color: var(--color-text-primary);
+            text-transform: capitalize;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pattern-compact-type {
+            font-size: var(--text-2xs);
+            color: var(--color-text-tertiary);
+        }
+
+        .pattern-compact-confidence {
+            font-size: var(--text-xs);
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-accent-primary);
+            flex-shrink: 0;
+        }
+
+        /* Compact Indicator Chips */
+        .indicator-compact {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-2) var(--space-3);
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 2px solid var(--color-text-tertiary);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-2);
+            transition: all 150ms;
+        }
+
+        .indicator-compact:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .indicator-compact--bullish {
+            border-left-color: var(--color-success);
+        }
+
+        .indicator-compact--bearish {
+            border-left-color: var(--color-error);
+        }
+
+        .indicator-compact-name {
+            font-size: var(--text-2xs);
+            font-weight: 700;
+            color: var(--color-text-tertiary);
+            text-transform: uppercase;
+        }
+
+        .indicator-compact-value {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .indicator-compact-text {
+            font-size: var(--text-xs);
+            color: var(--color-text-primary);
+            text-transform: capitalize;
+        }
+
+        .signal-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .signal-dot--bullish {
+            background: var(--color-success);
+        }
+
+        .signal-dot--bearish {
+            background: var(--color-error);
+        }
+
+        .signal-dot--neutral {
+            background: var(--color-text-tertiary);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
                 width: 240px;
                 z-index: 200;
-            }
-
-            .sidebar.mobile-hidden {
-                transform: translateX(-100%);
             }
 
             .main {
@@ -847,95 +1563,411 @@
             .chart-container {
                 height: 200px;
             }
+
+            .chart-with-overlay {
+                grid-template-columns: 1fr;
+            }
+
+            .pattern-overlay-compact {
+                max-height: none;
+                position: relative;
+                top: 0;
+            }
+
+            .chart-container-wrapper {
+                height: 300px;
+            }
         }
+
+        /* ==================== Watchlist & Top Picks Styles ==================== */
+
+        /* Watchlist Panel (Collapsible Bottom) */
+        .watchlist-panel {
+            position: fixed;
+            bottom: 0;
+            left: 240px;
+            right: 0;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur-medium);
+            border-top: 1px solid var(--glass-border);
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .watchlist-toggle {
+            padding: var(--space-4) var(--space-6);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--glass-bg-light);
+            border-bottom: 1px solid var(--glass-border-subtle);
+            user-select: none;
+        }
+
+        .watchlist-toggle:hover {
+            background: var(--glass-bg-medium);
+        }
+
+        .watchlist-count {
+            background: var(--color-accent-primary);
+            color: var(--color-bg-primary);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: var(--text-xs);
+            font-weight: 600;
+        }
+
+        .watchlist-content {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: var(--space-6);
+        }
+
+        .watchlist-content.collapsed {
+            display: none;
+        }
+
+        .watchlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-5);
+        }
+
+        .watchlist-header h3 {
+            font-size: var(--text-lg);
+            font-weight: 600;
+        }
+
+        .watchlist-actions {
+            display: flex;
+            gap: var(--space-4);
+        }
+
+        .watchlist-input {
+            padding: var(--space-3) var(--space-5);
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            color: var(--color-text-primary);
+            font-size: var(--text-sm);
+            width: 250px;
+        }
+
+        .watchlist-input:focus {
+            outline: none;
+            border-color: var(--color-accent-primary);
+        }
+
+        .watchlist-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .watchlist-item {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: var(--space-5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .watchlist-item:hover {
+            border-color: var(--color-accent-primary);
+            background: var(--glass-bg-light);
+        }
+
+        .watchlist-item-info {
+            flex: 1;
+        }
+
+        .watchlist-symbol {
+            font-size: var(--text-base);
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-2);
+        }
+
+        .watchlist-price {
+            font-size: var(--text-sm);
+            color: var(--color-text-secondary);
+        }
+
+        .watchlist-change {
+            font-size: var(--text-xs);
+            font-weight: 600;
+            margin-left: var(--space-3);
+        }
+
+        .watchlist-change.positive {
+            color: var(--color-success);
+        }
+
+        .watchlist-change.negative {
+            color: var(--color-error);
+        }
+
+        .watchlist-pattern-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: var(--radius-sm);
+            font-size: var(--text-2xs);
+            font-weight: 600;
+            margin-top: var(--space-2);
+        }
+
+        .watchlist-pattern-badge.bullish {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--color-success);
+        }
+
+        .watchlist-item-actions {
+            display: flex;
+            gap: var(--space-3);
+        }
+
+        .watchlist-remove-btn {
+            background: var(--color-error);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: var(--space-2) var(--space-4);
+            cursor: pointer;
+            font-size: var(--text-xs);
+            transition: opacity 0.2s;
+        }
+
+        .watchlist-remove-btn:hover {
+            opacity: 0.8;
+        }
+
+        /* Top Picks Card */
+        .top-picks-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+
+        .top-pick-item {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--glass-border);
+            border-left: 3px solid var(--color-success);
+            border-radius: var(--radius-md);
+            padding: var(--space-5);
+            transition: all 0.2s;
+        }
+
+        .top-pick-item:hover {
+            border-left-color: var(--color-accent-primary);
+            background: var(--glass-bg-light);
+        }
+
+        .top-pick-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-4);
+        }
+
+        .top-pick-symbol {
+            font-size: var(--text-lg);
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+
+        .top-pick-confidence {
+            background: var(--color-success);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: var(--text-xs);
+            font-weight: 600;
+        }
+
+        .top-pick-details {
+            display: flex;
+            gap: var(--space-6);
+            font-size: var(--text-sm);
+            color: var(--color-text-secondary);
+        }
+
+        .top-pick-detail {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+
+        .top-pick-detail-label {
+            font-size: var(--text-xs);
+            color: var(--color-text-tertiary);
+            text-transform: uppercase;
+        }
+
+        .top-pick-detail-value {
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .top-pick-pattern {
+            margin-top: var(--space-4);
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--glass-border-subtle);
+            font-size: var(--text-sm);
+            color: var(--color-text-secondary);
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--color-text-tertiary);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .watchlist-panel {
+                left: 0;
+            }
+
+            .watchlist-list {
+                grid-template-columns: 1fr;
+            }
+
+            .watchlist-input {
+                width: 150px;
+            }
+
+            .watchlist-actions {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .topbar {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 12px;
+            }
+
+            .topbar-nav {
+                order: 3;
+                width: 100%;
+                margin-top: 12px;
+                justify-content: flex-start;
+                overflow-x: auto;
+            }
+
+            .topbar-actions {
+                gap: 8px;
+            }
+
+            .funds-label,
+            .topbar-status {
+                display: none;
+            }
+        }
+
     </style>
 </head>
 <body>
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
     <div class="app">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar__logo">
-                <div class="sidebar__logo-icon">S</div>
-                <span class="sidebar__logo-text">Scalping Bot</span>
-            </div>
-
-            <nav style="flex: 1;">
-                <a href="/" class="nav-item active">
-                    <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/accounts" class="nav-item">
-                    <i data-lucide="wallet" style="width: 18px; height: 18px;"></i>
-                    <span>Accounts</span>
-                </a>
-                <a href="/strategies" class="nav-item">
-                    <i data-lucide="brain" style="width: 18px; height: 18px;"></i>
-                    <span>Strategies</span>
-                </a>
-                <a href="/analytics" class="nav-item">
-                    <i data-lucide="bar-chart-3" style="width: 18px; height: 18px;"></i>
-                    <span>Analytics</span>
-                </a>
-
-                <div class="nav-divider"></div>
-
-                <a href="/notifications" class="nav-item">
-                    <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
-                    <span>Notifications</span>
-                </a>
-                <a href="/settings" class="nav-item">
-                    <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
-                    <span>Settings</span>
-                </a>
-            </nav>
-
-            <div>
-                <a href="/help" class="nav-item">
-                    <i data-lucide="help-circle" style="width: 18px; height: 18px;"></i>
-                    <span>Help</span>
-                </a>
-            </div>
-        </aside>
 
         <!-- Main Content -->
-        <main class="main">
+        <main class="main" id="main-content">
             <!-- Top Bar -->
-            <header class="topbar">
+            <header class="topbar" role="banner">
                 <div class="topbar__left">
-                    <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">
+                    <!-- Logo (NEW) -->
+                    <a href="/" class="topbar__logo" style="text-decoration: none; color: inherit; cursor: pointer;">
+                        <div class="topbar__logo-icon">S</div>
+                        <span>Scalping Bot</span>
+                    </a>
+                    <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()" aria-label="Toggle mobile navigation menu" aria-expanded="false">
                         <div class="hamburger__line"></div>
                         <div class="hamburger__line"></div>
                         <div class="hamburger__line"></div>
                     </button>
 
-                    <div class="topbar__account">
-                        <i data-lucide="building" class="topbar__account-icon"></i>
+                    <div class="topbar__account" role="button" tabindex="0" aria-label="Account selector: Zerodha">
+                        <i data-lucide="building" class="topbar__account-icon" aria-hidden="true"></i>
                         <span class="topbar__account-name">Zerodha</span>
-                        <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: var(--color-text-tertiary);"></i>
+                        <i data-lucide="chevron-down" class="icon-14 icon-tertiary" aria-hidden="true"></i>
                     </div>
 
-                    <div class="topbar__funds">
+                    <div class="topbar__funds" role="status" aria-label="Available funds">
                         <span class="topbar__funds-label">Available</span>
-                        <span class="topbar__funds-value" id="topbarFunds">₹100,000</span>
+                        <span class="topbar__funds-value" id="topbarFunds" aria-live="polite">₹100,000</span>
                     </div>
 
-                    <div class="topbar__status">
-                        <span class="topbar__status-dot topbar__status-dot--offline" id="topbarStatusDot"></span>
-                        <span class="topbar__status-text" id="topbarStatusText">Offline</span>
+                    <div class="topbar__status" role="status" aria-label="Bot status">
+                        <span class="topbar__status-dot topbar__status-dot--offline" id="topbarStatusDot" aria-hidden="true"></span>
+                        <span class="topbar__status-text" id="topbarStatusText" aria-live="polite">Offline</span>
                     </div>
                 </div>
 
                 <div class="topbar__right">
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
-                        <span class="topbar__badge">0</span>
-                    </button>
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
-                    </button>
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="user" style="width: 18px; height: 18px;"></i>
-                    </button>
+                    <!-- Notification Dropdown (NEW) -->
+                    <div class="dropdown">
+                        <button class="topbar__icon-btn" onclick="toggleDropdown('notificationDropdown')" aria-label="Notifications">
+                            <i data-lucide="bell" class="icon-18"></i>
+                            <span class="topbar__badge" id="notification-count">0</span>
+                        </button>
+                        <div class="dropdown__menu notification-dropdown" id="notificationDropdown">
+                            <div class="dropdown__header">Notifications</div>
+                            <div class="notification-empty" id="notificationList">
+                                No new notifications
+                            </div>
+                            <div class="notification-footer">
+                                <button class="notification-footer__btn" onclick="window.location.href='/notifications'">
+                                    View All Notifications
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown (NEW) -->
+                    <div class="dropdown">
+                        <button class="topbar__icon-btn" onclick="toggleDropdown('profileDropdown')" aria-label="User Profile">
+                            <i data-lucide="user" class="icon-18"></i>
+                        </button>
+                        <div class="dropdown__menu" id="profileDropdown">
+                            <a href="/" class="dropdown__item active">
+                                <i data-lucide="layout-dashboard" class="icon-16"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="/accounts" class="dropdown__item">
+                                <i data-lucide="wallet" class="icon-16"></i>
+                                <span>Accounts</span>
+                            </a>
+                            <a href="/strategies" class="dropdown__item">
+                                <i data-lucide="brain" class="icon-16"></i>
+                                <span>Strategies</span>
+                            </a>
+                            <a href="/analytics" class="dropdown__item">
+                                <i data-lucide="bar-chart-3" class="icon-16"></i>
+                                <span>Analytics</span>
+                            </a>
+                            <div class="dropdown__divider"></div>
+                            <a href="/settings" class="dropdown__item">
+                                <i data-lucide="settings" class="icon-16"></i>
+                                <span>Settings</span>
+                            </a>
+                            <a href="/implementation-log" class="dropdown__item">
+                                <i data-lucide="list-checks" class="icon-16"></i>
+                                <span>Implementation Log</span>
+                            </a>
+                            <a href="/help" class="dropdown__item">
+                                <i data-lucide="help-circle" class="icon-16"></i>
+                                <span>Help</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -948,7 +1980,7 @@
                         <p class="header__subtitle">Here's what's happening with your bot today</p>
                     </div>
                     <span class="status-badge status-badge--stopped" id="statusBadge">
-                        <i data-lucide="circle" style="width: 8px; height: 8px; fill: currentColor;"></i>
+                        <i data-lucide="circle" class="icon-8 icon-fill" aria-hidden="true"></i>
                         Stopped
                     </span>
                 </div>
@@ -956,40 +1988,41 @@
                 <!-- Integration Banner -->
                 <div class="integration-banner" id="integrationBanner">
                     <div class="integration-banner__icon">
-                        <i data-lucide="alert-triangle" style="width: 20px; height: 20px;"></i>
+                        <i data-lucide="alert-triangle" class="icon-20" aria-hidden="true"></i>
                     </div>
                     <div class="integration-banner__content">
                         <h4 class="integration-banner__title">Authentication Required</h4>
                         <p class="integration-banner__message">Connect to Zerodha to start trading with real-time data</p>
                     </div>
                     <a href="/accounts" class="btn btn-primary">
-                        <i data-lucide="link" style="width: 16px; height: 16px;"></i>
+                        <i data-lucide="link" class="icon-16" aria-hidden="true"></i>
                         Connect Now
                     </a>
                 </div>
 
                 <!-- Controls -->
-                <div class="controls fade-in">
-                    <select id="modeSelect">
+                <div class="controls fade-in" role="group" aria-label="Trading bot controls">
+                    <label for="modeSelect" class="visually-hidden">Trading Mode</label>
+                    <select id="modeSelect" aria-label="Select trading mode">
                         <option value="paper">Paper Trading</option>
                         <option value="live">Live Trading</option>
                     </select>
 
-                    <button class="btn btn-primary" onclick="startBot()">
-                        <i data-lucide="play" style="width: 16px; height: 16px;"></i>
-                        Start
+                    <button class="btn btn-primary" onclick="startBot()" aria-label="Start trading bot">
+                        <i data-lucide="play" class="icon-16" aria-hidden="true"></i>
+                        <span>Start</span>
                     </button>
-                    <button class="btn btn-secondary" onclick="pauseBot()">
-                        <i data-lucide="pause" style="width: 16px; height: 16px;"></i>
-                        Pause
+                    <button class="btn btn-secondary" onclick="pauseBot()" aria-label="Pause trading bot">
+                        <i data-lucide="pause" class="icon-16" aria-hidden="true"></i>
+                        <span>Pause</span>
                     </button>
-                    <button class="btn btn-secondary" onclick="stopBot()">
-                        <i data-lucide="square" style="width: 16px; height: 16px;"></i>
-                        Stop
+                    <button class="btn btn-secondary" onclick="stopBot()" aria-label="Stop trading bot">
+                        <i data-lucide="square" class="icon-16" aria-hidden="true"></i>
+                        <span>Stop</span>
                     </button>
-                    <button class="btn btn-danger" onclick="emergencyStop()">
-                        <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i>
-                        Emergency Stop
+                    <button class="btn btn-danger" onclick="emergencyStop()" aria-label="Emergency stop - cancel all orders and close positions">
+                        <i data-lucide="alert-triangle" class="icon-16" aria-hidden="true"></i>
+                        <span>Emergency Stop</span>
                     </button>
                 </div>
 
@@ -997,42 +2030,93 @@
                 <div id="alertArea"></div>
 
                 <!-- Compact Stats Row -->
-                <div class="stats-row fade-in">
-                    <div class="stat">
-                        <div class="stat__label">DAILY P&L</div>
-                        <div class="stat__value" id="dailyPnl">₹0.00</div>
-                        <div class="stat__change stat__change--up" id="dailyChange">
-                            <i data-lucide="trending-up" style="width: 12px; height: 12px;"></i>
+                <div class="stats-row fade-in" role="region" aria-label="Trading statistics">
+                    <div class="stat" role="group" aria-labelledby="daily-pnl-label">
+                        <div class="stat__label" id="daily-pnl-label">DAILY P&L</div>
+                        <div class="stat__value" id="dailyPnl" aria-live="polite">₹0.00</div>
+                        <div class="stat__change stat__change--up" id="dailyChange" aria-live="polite">
+                            <i data-lucide="trending-up" class="icon-12" aria-hidden="true"></i>
                             <span>0.0%</span>
                         </div>
                     </div>
 
-                    <div class="stat__divider"></div>
+                    <div class="stat__divider" role="separator"></div>
 
-                    <div class="stat">
-                        <div class="stat__label">TOTAL P&L</div>
-                        <div class="stat__value" id="totalPnl">₹0.00</div>
+                    <div class="stat" role="group" aria-labelledby="total-pnl-label">
+                        <div class="stat__label" id="total-pnl-label">TOTAL P&L</div>
+                        <div class="stat__value" id="totalPnl" aria-live="polite">₹0.00</div>
                         <div class="stat__meta">All Time</div>
                     </div>
 
-                    <div class="stat__divider"></div>
+                    <div class="stat__divider" role="separator"></div>
 
-                    <div class="stat">
-                        <div class="stat__label">WIN RATE</div>
-                        <div class="stat__value" id="winRate">0.0%</div>
-                        <div class="stat__meta" id="winStats">0/0 trades</div>
+                    <div class="stat" role="group" aria-labelledby="win-rate-label">
+                        <div class="stat__label" id="win-rate-label">WIN RATE</div>
+                        <div class="stat__value" id="winRate" aria-live="polite">0.0%</div>
+                        <div class="stat__meta" id="winStats" aria-live="polite">0/0 trades</div>
                     </div>
 
-                    <div class="stat__divider"></div>
+                    <div class="stat__divider" role="separator"></div>
 
-                    <div class="stat">
-                        <div class="stat__label">TRADES</div>
-                        <div class="stat__value" id="todayTrades">0</div>
+                    <div class="stat" role="group" aria-labelledby="trades-label">
+                        <div class="stat__label" id="trades-label">TRADES</div>
+                        <div class="stat__value" id="todayTrades" aria-live="polite">0</div>
                         <div class="stat__meta">Today</div>
                     </div>
                 </div>
 
-                <!-- Compact Chart -->
+                <!-- Candlestick Chart with Pattern Overlay -->
+                <div class="chart-with-overlay fade-in">
+                    <!-- Left: Candlestick Chart -->
+                    <div class="chart-main-card">
+                        <div class="chart-main-header">
+                            <div class="chart-main-title">
+                                <span class="chart-symbol" id="chartSymbol">NIFTY 50</span>
+                                <span class="chart-timeframe" id="chartTimeframe">• 5m</span>
+                            </div>
+                            <div class="chart-price-info">
+                                <span class="chart-current-price" id="chartCurrentPrice">₹50,000</span>
+                                <span class="chart-price-change" id="chartPriceChange">+0.00%</span>
+                            </div>
+                        </div>
+                        <div class="chart-container-wrapper">
+                            <div id="candlestickChart"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Pattern Overlay (Compact) -->
+                    <div class="pattern-overlay-compact">
+                        <div class="overlay-header-compact">
+                            <div class="overlay-title-compact">
+                                <i data-lucide="brain" class="icon-18 icon-accent" aria-hidden="true"></i>
+                                <span>Patterns</span>
+                            </div>
+                            <span class="overlay-count" id="patternCountCompact">0</span>
+                        </div>
+
+                        <!-- Candlestick Patterns (Compact) -->
+                        <div class="overlay-section-compact">
+                            <div class="overlay-section-title">Candlestick</div>
+                            <div id="candlestickPatternsCompact">
+                                <p class="empty-state">
+                                    No patterns
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Technical Indicators (Compact) -->
+                        <div class="overlay-section-compact">
+                            <div class="overlay-section-title">Indicators</div>
+                            <div id="indicatorSignalsCompact">
+                                <p class="empty-state">
+                                    Loading...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Overview Chart (Chart.js) -->
                 <div class="chart-card fade-in">
                     <div class="chart-header">
                         <h3 class="chart-header__title">Performance Overview</h3>
@@ -1054,12 +2138,12 @@
                     <div class="card fade-in">
                         <div class="card__header">
                             <h3 class="card__title">Current Positions</h3>
-                            <button class="topbar__icon-btn">
-                                <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
+                            <button class="topbar__icon-btn" aria-label="Refresh positions">
+                                <i data-lucide="refresh-cw" class="icon-16" aria-hidden="true"></i>
                             </button>
                         </div>
                         <div id="positionsContent">
-                            <p style="color: var(--color-text-secondary); text-align: center; padding: var(--space-8) 0; font-size: var(--text-sm);">
+                            <p class="empty-state empty-state--large">
                                 No active positions
                             </p>
                         </div>
@@ -1069,15 +2153,29 @@
                     <div class="card fade-in">
                         <div class="card__header">
                             <h3 class="card__title">Recent Trades</h3>
-                            <button class="topbar__icon-btn">
-                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                            <button class="topbar__icon-btn" aria-label="Download trade history">
+                                <i data-lucide="download" class="icon-16" aria-hidden="true"></i>
                             </button>
                         </div>
                         <div id="tradesContent">
-                            <p style="color: var(--color-text-secondary); text-align: center; padding: var(--space-8) 0; font-size: var(--text-sm);">
+                            <p class="empty-state empty-state--large">
                                 No trades yet
                             </p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Today's Top Picks -->
+                <div class="card fade-in" id="topPicksCard">
+                    <div class="card__header">
+                        <h3 class="card__title">📈 Today's Top Picks</h3>
+                        <button class="btn btn--secondary btn--sm" onclick="refreshTopPicks()">
+                            <i data-lucide="refresh-cw"></i>
+                            Refresh
+                        </button>
+                    </div>
+                    <div id="topPicksList" class="top-picks-list">
+                        <div class="loading-spinner">Loading recommendations...</div>
                     </div>
                 </div>
 
@@ -1101,14 +2199,247 @@
                 </div>
             </div>
         </main>
+
+        <!-- Watchlist (Collapsible Bottom Panel) -->
+        <div class="watchlist-panel" id="watchlistPanel">
+            <div class="watchlist-toggle" onclick="toggleWatchlist()">
+                <span id="watchlistToggleText">▲ WATCHLIST</span>
+                <span class="watchlist-count" id="watchlistCount">0</span>
+            </div>
+            <div class="watchlist-content" id="watchlistContent">
+                <div class="watchlist-header">
+                    <h3>My Watchlist</h3>
+                    <div class="watchlist-actions">
+                        <input type="text" id="addStockInput" placeholder="Enter symbol (e.g., RELIANCE)" class="watchlist-input">
+                        <button class="btn btn--primary btn--sm" onclick="addToWatchlist()">
+                            <i data-lucide="plus"></i>
+                            Add
+                        </button>
+                    </div>
+                </div>
+                <div class="watchlist-list" id="watchlistList">
+                    <div class="loading-spinner">Loading watchlist...</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
+        // XSS Sanitization Utilities
+        const sanitizeHTML = (() => {
+            const tagWhitelist = ['b', 'i', 'em', 'strong', 'span', 'div', 'p', 'br'];
+            const attrWhitelist = ['class', 'id', 'data-lucide', 'aria-hidden', 'aria-label'];
+
+            // Escape HTML special characters
+            const escapeHTML = (str) => {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            };
+
+            // Sanitize HTML string
+            const sanitize = (dirty) => {
+                if (typeof dirty !== 'string') return '';
+
+                // Create a temporary element
+                const temp = document.createElement('div');
+                temp.innerHTML = dirty;
+
+                // Recursively clean elements
+                const clean = (node) => {
+                    // Text nodes are safe
+                    if (node.nodeType === 3) return node.cloneNode();
+
+                    // Only allow whitelisted tags
+                    if (node.nodeType === 1) {
+                        const tagName = node.tagName.toLowerCase();
+                        if (!tagWhitelist.includes(tagName)) {
+                            // If tag not allowed, return its text content
+                            return document.createTextNode(node.textContent);
+                        }
+
+                        const cleanNode = document.createElement(tagName);
+
+                        // Only copy whitelisted attributes
+                        Array.from(node.attributes).forEach(attr => {
+                            if (attrWhitelist.includes(attr.name)) {
+                                cleanNode.setAttribute(attr.name, attr.value);
+                            }
+                        });
+
+                        // Recursively clean children
+                        Array.from(node.childNodes).forEach(child => {
+                            const cleanChild = clean(child);
+                            if (cleanChild) cleanNode.appendChild(cleanChild);
+                        });
+
+                        return cleanNode;
+                    }
+
+                    return null;
+                };
+
+                const cleanDiv = document.createElement('div');
+                Array.from(temp.childNodes).forEach(child => {
+                    const cleanChild = clean(child);
+                    if (cleanChild) cleanDiv.appendChild(cleanChild);
+                });
+
+                return cleanDiv.innerHTML;
+            };
+
+            return { escape: escapeHTML, sanitize };
+        })();
+
         // Initialize Lucide icons
         lucide.createIcons();
 
         let currentLogType = 'system';
         let performanceChart = null;
+        let candlestickChart = null;
+        let candlestickSeries = null;
+        let chartMarkers = [];
+
+        // Initialize Candlestick Chart (Lightweight Charts)
+        function initCandlestickChart() {
+            const chartContainer = document.getElementById('candlestickChart');
+            if (!chartContainer) return;
+
+            // Create chart
+            candlestickChart = LightweightCharts.createChart(chartContainer, {
+                width: chartContainer.clientWidth,
+                height: 450,
+                layout: {
+                    background: { color: '#0A0E14' },
+                    textColor: '#9CA3AF'
+                },
+                grid: {
+                    vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
+                    horzLines: { color: 'rgba(255, 255, 255, 0.04)' }
+                },
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal
+                },
+                rightPriceScale: {
+                    borderColor: 'rgba(255, 255, 255, 0.08)'
+                },
+                timeScale: {
+                    borderColor: 'rgba(255, 255, 255, 0.08)',
+                    timeVisible: true,
+                    secondsVisible: false
+                }
+            });
+
+            // Add candlestick series (Groww-style colors)
+            candlestickSeries = candlestickChart.addCandlestickSeries({
+                upColor: '#00D09C',
+                downColor: '#FF5252',
+                borderUpColor: '#00D09C',
+                borderDownColor: '#FF5252',
+                wickUpColor: '#00D09C',
+                wickDownColor: '#FF5252'
+            });
+
+            // Load initial data
+            updateCandlestickData();
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                if (candlestickChart && chartContainer) {
+                    candlestickChart.applyOptions({
+                        width: chartContainer.clientWidth
+                    });
+                }
+            });
+        }
+
+        // Update Candlestick Chart Data
+        function updateCandlestickData() {
+            fetch('/api/chart/ohlc?count=100&timeframe=5m&trend=sideways')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success || !data.candles) {
+                        console.error('Failed to load OHLC data');
+                        return;
+                    }
+
+                    // Convert candles to Lightweight Charts format
+                    const formattedData = data.candles.map(candle => ({
+                        time: candle.time,
+                        open: candle.open,
+                        high: candle.high,
+                        low: candle.low,
+                        close: candle.close
+                    }));
+
+                    // Update series
+                    if (candlestickSeries) {
+                        candlestickSeries.setData(formattedData);
+                    }
+
+                    // Update price info
+                    const lastCandle = data.candles[data.candles.length - 1];
+                    updatePriceInfo(lastCandle, data.candles[data.candles.length - 2]);
+
+                    // Fetch and add pattern markers
+                    addPatternMarkers(data.candles);
+                })
+                .catch(e => console.error('OHLC update failed:', e));
+        }
+
+        // Update Price Information
+        function updatePriceInfo(current, previous) {
+            if (!current) return;
+
+            const priceElement = document.getElementById('chartCurrentPrice');
+            const changeElement = document.getElementById('chartPriceChange');
+
+            priceElement.textContent = `₹${current.close.toFixed(2)}`;
+
+            if (previous) {
+                const change = ((current.close - previous.close) / previous.close) * 100;
+                const changeText = change >= 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`;
+                changeElement.textContent = changeText;
+                changeElement.style.color = change >= 0 ? '#00D09C' : '#FF5252';
+                priceElement.style.color = change >= 0 ? '#00D09C' : '#FF5252';
+            }
+        }
+
+        // Add Pattern Markers to Chart
+        function addPatternMarkers(candles) {
+            // Get pattern data
+            fetch('/api/patterns/all')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success || !data.candlestick_patterns) return;
+
+                    // Clear existing markers
+                    chartMarkers = [];
+
+                    // Add marker for each pattern
+                    data.candlestick_patterns.forEach(pattern => {
+                        const lastCandle = candles[candles.length - 1];
+
+                        const isBullish = pattern.type.includes('bullish');
+                        const isBearish = pattern.type.includes('bearish');
+
+                        chartMarkers.push({
+                            time: lastCandle.time,
+                            position: isBullish ? 'belowBar' : 'aboveBar',
+                            color: isBullish ? '#10B981' : (isBearish ? '#EF4444' : '#F59E0B'),
+                            shape: isBullish ? 'arrowUp' : (isBearish ? 'arrowDown' : 'circle'),
+                            text: `${pattern.name} (${pattern.confidence}%)`,
+                            size: 1
+                        });
+                    });
+
+                    // Set markers on series
+                    if (candlestickSeries && chartMarkers.length > 0) {
+                        candlestickSeries.setMarkers(chartMarkers);
+                    }
+                })
+                .catch(e => console.error('Pattern marker update failed:', e));
+        }
 
         // Initialize Chart (Compact 240px height)
         function initChart() {
@@ -1198,7 +2529,7 @@
                     const badge = document.getElementById('statusBadge');
                     badge.className = `status-badge status-badge--${data.status}`;
                     badge.innerHTML = `
-                        <i data-lucide="circle" style="width: 8px; height: 8px; fill: currentColor;"></i>
+                        <i data-lucide="circle" class="icon-8 icon-fill" aria-hidden="true"></i>
                         ${data.status.charAt(0).toUpperCase() + data.status.slice(1)}
                     `;
 
@@ -1235,6 +2566,105 @@
                 .catch(e => console.error('Update failed:', e));
         }
 
+        // Update Pattern Overlay (Compact Version)
+        function updatePatterns() {
+            fetch('/api/patterns/all')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) {
+                        console.error('Pattern fetch failed:', data.error);
+                        return;
+                    }
+
+                    // Update pattern count (compact)
+                    const totalPatterns = data.candlestick_patterns.length + data.chart_patterns.length;
+                    const countElement = document.getElementById('patternCountCompact');
+                    if (countElement) {
+                        countElement.textContent = `${totalPatterns}`;
+                    }
+
+                    // Update candlestick patterns (compact)
+                    updateCandlestickPatternsCompact(data.candlestick_patterns);
+
+                    // Update indicator signals (compact)
+                    updateIndicatorSignalsCompact(data.indicators.signals);
+                })
+                .catch(e => console.error('Pattern update failed:', e));
+        }
+
+        function updateCandlestickPatternsCompact(patterns) {
+            const container = document.getElementById('candlestickPatternsCompact');
+
+            if (!patterns || patterns.length === 0) {
+                container.innerHTML = `
+                    <p style="color: var(--color-text-tertiary); text-align: center; padding: var(--space-4) 0; font-size: var(--text-xs);">
+                        No patterns
+                    </p>
+                `;
+                return;
+            }
+
+            let html = '';
+            patterns.forEach(pattern => {
+                const icon = getPatternIcon(pattern.type);
+                const typeClass = pattern.type.includes('bullish') ? 'bullish' :
+                                 pattern.type.includes('bearish') ? 'bearish' : 'indecision';
+
+                html += `
+                    <div class="pattern-compact pattern-compact--${sanitizeHTML.escape(typeClass)}">
+                        <span class="pattern-icon">${sanitizeHTML.escape(icon)}</span>
+                        <div class="pattern-compact-info">
+                            <div class="pattern-compact-name">${sanitizeHTML.escape(pattern.name.replace(/_/g, ' '))}</div>
+                        </div>
+                        <span class="pattern-compact-confidence">${sanitizeHTML.escape(String(pattern.confidence))}%</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function getPatternIcon(type) {
+            if (type.includes('bullish')) return '↗️';
+            if (type.includes('bearish')) return '↘️';
+            return '⚡';
+        }
+
+        function updateIndicatorSignalsCompact(signals) {
+            const container = document.getElementById('indicatorSignalsCompact');
+
+            if (!signals || Object.keys(signals).length === 0) {
+                container.innerHTML = `
+                    <p style="color: var(--color-text-tertiary); text-align: center; padding: var(--space-4) 0; font-size: var(--text-xs);">
+                        No signals
+                    </p>
+                `;
+                return;
+            }
+
+            let html = '';
+            for (const [name, signal] of Object.entries(signals)) {
+                const signalType = getSignalType(signal);
+                html += `
+                    <div class="indicator-compact indicator-compact--${sanitizeHTML.escape(signalType)}">
+                        <span class="indicator-compact-name">${sanitizeHTML.escape(name)}</span>
+                        <div class="indicator-compact-value">
+                            <span class="indicator-compact-text">${sanitizeHTML.escape(signal.replace(/_/g, ' ').split(' ')[0])}</span>
+                            <span class="signal-dot signal-dot--${sanitizeHTML.escape(signalType)}"></span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function getSignalType(signal) {
+            if (signal.includes('buy') || signal.includes('bullish')) return 'bullish';
+            if (signal.includes('sell') || signal.includes('bearish')) return 'bearish';
+            return 'neutral';
+        }
+
         function updateStatValue(id, value) {
             const el = document.getElementById(id);
             el.textContent = '₹' + value.toFixed(2);
@@ -1259,10 +2689,10 @@
                 const pnl = (p.current_price - p.avg_price) * p.quantity;
                 const pnlClass = pnl > 0 ? 'positive' : 'negative';
                 html += `<tr>
-                    <td class="table-symbol">${p.symbol}</td>
-                    <td>${p.quantity}</td>
-                    <td>₹${p.current_price.toFixed(2)}</td>
-                    <td class="table-pnl table-pnl--${pnlClass}">₹${pnl.toFixed(2)}</td>
+                    <td class="table-symbol">${sanitizeHTML.escape(p.symbol)}</td>
+                    <td>${sanitizeHTML.escape(String(p.quantity))}</td>
+                    <td>₹${sanitizeHTML.escape(p.current_price.toFixed(2))}</td>
+                    <td class="table-pnl table-pnl--${sanitizeHTML.escape(pnlClass)}">₹${sanitizeHTML.escape(pnl.toFixed(2))}</td>
                 </tr>`;
             });
             html += '</tbody></table>';
@@ -1280,10 +2710,10 @@
             trades.slice(-5).reverse().forEach(t => {
                 const pnlClass = t.pnl > 0 ? 'positive' : 'negative';
                 html += `<tr>
-                    <td>${new Date(t.timestamp).toLocaleTimeString()}</td>
-                    <td class="table-symbol">${t.symbol}</td>
-                    <td>${t.action}</td>
-                    <td class="table-pnl table-pnl--${pnlClass}">₹${t.pnl.toFixed(2)}</td>
+                    <td>${sanitizeHTML.escape(new Date(t.timestamp).toLocaleTimeString())}</td>
+                    <td class="table-symbol">${sanitizeHTML.escape(t.symbol)}</td>
+                    <td>${sanitizeHTML.escape(t.action)}</td>
+                    <td class="table-pnl table-pnl--${sanitizeHTML.escape(pnlClass)}">₹${sanitizeHTML.escape(t.pnl.toFixed(2))}</td>
                 </tr>`;
             });
             html += '</tbody></table>';
@@ -1301,9 +2731,9 @@
                     data.logs.forEach(log => {
                         if (log.timestamp) {
                             html += `<div class="log-entry">
-                                <span class="log-timestamp">${new Date(log.timestamp).toLocaleTimeString()}</span>
-                                <span class="log-level log-level--${log.level}">[${log.level}]</span>
-                                <span>${log.message}</span>
+                                <span class="log-timestamp">${sanitizeHTML.escape(new Date(log.timestamp).toLocaleTimeString())}</span>
+                                <span class="log-level log-level--${sanitizeHTML.escape(log.level)}">[${sanitizeHTML.escape(log.level)}]</span>
+                                <span>${sanitizeHTML.escape(log.message)}</span>
                             </div>`;
                         }
                     });
@@ -1325,8 +2755,8 @@
             const alert = document.createElement('div');
             alert.className = `alert alert-${type} fade-in`;
             alert.innerHTML = `
-                <i data-lucide="${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'alert-triangle'}" style="width: 18px; height: 18px;"></i>
-                <span>${message}</span>
+                <i data-lucide="${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'alert-triangle'}" class="icon-18" aria-hidden="true"></i>
+                <span>${sanitizeHTML.escape(message)}</span>
             `;
             area.appendChild(alert);
             lucide.createIcons();
@@ -1387,11 +2817,288 @@
             hamburger.classList.toggle('active');
         }
 
+        // ==================== Watchlist & Recommendations Functions ====================
+
+        // Toggle watchlist panel
+        function toggleWatchlist() {
+            const content = document.getElementById('watchlistContent');
+            const toggleText = document.getElementById('watchlistToggleText');
+            content.classList.toggle('collapsed');
+            toggleText.textContent = content.classList.contains('collapsed') ? '▼ WATCHLIST' : '▲ WATCHLIST';
+        }
+
+        // Load watchlist
+        function loadWatchlist() {
+            fetch('/api/watchlist')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) {
+                        console.error('Failed to load watchlist:', data.error);
+                        return;
+                    }
+
+                    const watchlistList = document.getElementById('watchlistList');
+                    const watchlistCount = document.getElementById('watchlistCount');
+
+                    watchlistCount.textContent = data.count;
+
+                    if (data.count === 0) {
+                        watchlistList.innerHTML = '<div class="loading-spinner">No stocks in watchlist. Add one above!</div>';
+                        return;
+                    }
+
+                    watchlistList.innerHTML = data.watchlist.map(stock => `
+                        <div class="watchlist-item">
+                            <div class="watchlist-item-info">
+                                <div class="watchlist-symbol">${sanitizeHTML.escape(stock.symbol)}</div>
+                                <div class="watchlist-price">
+                                    ₹${sanitizeHTML.escape(String(stock.current_price))}
+                                    <span class="watchlist-change ${stock.price_change >= 0 ? 'positive' : 'negative'}">
+                                        ${stock.price_change >= 0 ? '+' : ''}${sanitizeHTML.escape(stock.price_change_pct.toFixed(2))}%
+                                    </span>
+                                </div>
+                                ${stock.pattern_badge ? `
+                                    <div class="watchlist-pattern-badge bullish">
+                                        ${sanitizeHTML.escape(stock.pattern_badge.name)} (${sanitizeHTML.escape(String(stock.pattern_badge.confidence))}%)
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="watchlist-item-actions">
+                                <button class="watchlist-remove-btn" onclick="removeFromWatchlist('${sanitizeHTML.escape(stock.symbol)}')">
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    lucide.createIcons();
+                })
+                .catch(err => console.error('Error loading watchlist:', err));
+        }
+
+        // Add to watchlist
+        function addToWatchlist() {
+            const input = document.getElementById('addStockInput');
+            const symbol = input.value.trim().toUpperCase();
+
+            if (!symbol) {
+                showAlert('Please enter a stock symbol', 'error');
+                return;
+            }
+
+            fetch('/api/watchlist/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({symbol: symbol})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(`${symbol} added to watchlist`, 'success');
+                    input.value = '';
+                    loadWatchlist();
+                } else {
+                    showAlert(data.error, 'error');
+                }
+            })
+            .catch(err => {
+                console.error('Error adding to watchlist:', err);
+                showAlert('Failed to add stock', 'error');
+            });
+        }
+
+        // Remove from watchlist
+        function removeFromWatchlist(symbol) {
+            fetch('/api/watchlist/remove', {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({symbol: symbol})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(`${symbol} removed from watchlist`, 'success');
+                    loadWatchlist();
+                } else {
+                    showAlert(data.error, 'error');
+                }
+            })
+            .catch(err => {
+                console.error('Error removing from watchlist:', err);
+                showAlert('Failed to remove stock', 'error');
+            });
+        }
+
+        // Load top picks
+        function loadTopPicks() {
+            fetch('/api/recommendations/today?limit=5')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) {
+                        console.error('Failed to load recommendations:', data.error);
+                        return;
+                    }
+
+                    const topPicksList = document.getElementById('topPicksList');
+
+                    if (data.count === 0) {
+                        topPicksList.innerHTML = '<div class="loading-spinner">No recommendations available today. Try refreshing!</div>';
+                        return;
+                    }
+
+                    topPicksList.innerHTML = data.recommendations.map(pick => `
+                        <div class="top-pick-item">
+                            <div class="top-pick-header">
+                                <span class="top-pick-symbol">${sanitizeHTML.escape(pick.symbol)}</span>
+                                <span class="top-pick-confidence">${sanitizeHTML.escape(String(pick.confidence))}%</span>
+                            </div>
+                            <div class="top-pick-details">
+                                <div class="top-pick-detail">
+                                    <span class="top-pick-detail-label">Entry</span>
+                                    <span class="top-pick-detail-value">₹${sanitizeHTML.escape(String(pick.entry_price))}</span>
+                                </div>
+                                <div class="top-pick-detail">
+                                    <span class="top-pick-detail-label">Pattern</span>
+                                    <span class="top-pick-detail-value">${sanitizeHTML.escape(pick.pattern_name.replace(/_/g, ' '))}</span>
+                                </div>
+                            </div>
+                            <div class="top-pick-pattern">
+                                📊 ${sanitizeHTML.escape(pick.pattern_type.charAt(0).toUpperCase() + pick.pattern_type.slice(1))} Signal
+                            </div>
+                        </div>
+                    `).join('');
+
+                    lucide.createIcons();
+                })
+                .catch(err => console.error('Error loading top picks:', err));
+        }
+
+        // Refresh top picks
+        function refreshTopPicks() {
+            const topPicksList = document.getElementById('topPicksList');
+            topPicksList.innerHTML = '<div class="loading-spinner">Refreshing recommendations...</div>';
+
+            fetch('/api/recommendations/today?limit=5&refresh=true')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) {
+                        showAlert('Failed to refresh recommendations', 'error');
+                        return;
+                    }
+
+                    loadTopPicks();
+                    showAlert(`Refreshed ${data.count} recommendations`, 'success');
+                })
+                .catch(err => {
+                    console.error('Error refreshing picks:', err);
+                    showAlert('Failed to refresh recommendations', 'error');
+                });
+        }
+
+        // Keyboard Navigation Support
+        document.addEventListener('keydown', (e) => {
+            // Escape key - Close modals/alerts
+            if (e.key === 'Escape') {
+                const alertArea = document.getElementById('alertArea');
+                if (alertArea && alertArea.children.length > 0) {
+                    alertArea.innerHTML = '';
+                }
+            }
+
+            // Arrow keys for tab navigation (when not in input)
+            if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+                // Chart tabs (performance overview)
+                const chartTabs = document.querySelectorAll('.chart-tabs .chart-tab');
+                const activeChartTab = document.querySelector('.chart-tabs .chart-tab.active');
+
+                if (e.key === 'ArrowLeft' && activeChartTab) {
+                    e.preventDefault();
+                    const index = Array.from(chartTabs).indexOf(activeChartTab);
+                    if (index > 0) {
+                        chartTabs[index - 1].click();
+                        chartTabs[index - 1].focus();
+                    }
+                }
+
+                if (e.key === 'ArrowRight' && activeChartTab) {
+                    e.preventDefault();
+                    const index = Array.from(chartTabs).indexOf(activeChartTab);
+                    if (index < chartTabs.length - 1) {
+                        chartTabs[index + 1].click();
+                        chartTabs[index + 1].focus();
+                    }
+                }
+
+                // Ctrl/Cmd + E - Emergency Stop
+                if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                    e.preventDefault();
+                    if (confirm('⚠️ Emergency Stop: Cancel all orders and close positions?')) {
+                        emergencyStop();
+                    }
+                }
+
+                // Ctrl/Cmd + S - Start Bot
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    startBot();
+                }
+
+                // Ctrl/Cmd + P - Pause Bot
+                if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                    e.preventDefault();
+                    pauseBot();
+                }
+            }
+        });
+
+        // Allow Enter key for adding stock
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('addStockInput');
+            if (input) {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        addToWatchlist();
+                    }
+                });
+            }
+
+            // Make chart tabs keyboard accessible
+            const chartTabs = document.querySelectorAll('.chart-tabs .chart-tab');
+            chartTabs.forEach((tab, index) => {
+                tab.setAttribute('tabindex', '0');
+                tab.setAttribute('role', 'tab');
+                tab.setAttribute('aria-selected', tab.classList.contains('active') ? 'true' : 'false');
+
+                tab.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        tab.click();
+                    }
+                });
+            });
+
+            // Make account selector keyboard accessible
+            const accountSelector = document.querySelector('.topbar__account');
+            if (accountSelector) {
+                accountSelector.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        // Trigger account selector (you can add dropdown logic here)
+                        console.log('Account selector clicked');
+                    }
+                });
+            }
+        });
+
         // Initialize
         window.onload = () => {
-            initChart();
+            initCandlestickChart(); // Initialize candlestick chart
+            initChart(); // Initialize performance chart
             updateDashboard();
             loadLogs();
+            updatePatterns(); // Load pattern recognition data
+            loadWatchlist(); // Load watchlist
+            loadTopPicks(); // Load top picks
 
             // Hide sidebar on mobile by default
             if (window.innerWidth <= 768) {
@@ -1401,8 +3108,104 @@
             setInterval(() => {
                 updateDashboard();
                 loadLogs();
+                updatePatterns(); // Refresh pattern data every 2 seconds
+                loadWatchlist(); // Refresh watchlist every 2 seconds
+                // Note: Chart updates are handled within updateCandlestickData
+                // Note: Top picks are NOT auto-refreshed (manual refresh only)
             }, 2000);
         };
+
+        // Dropdown Menu System
+        function toggleDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            const allDropdowns = document.querySelectorAll('.dropdown__menu');
+
+            // Close all other dropdowns
+            allDropdowns.forEach(d => {
+                if (d.id !== dropdownId) {
+                    d.classList.remove('show');
+                }
+            });
+
+            // Toggle current dropdown
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown__menu').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+            }
+        });
+
+        // Set active menu item based on current page
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.dropdown__item').forEach(item => {
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        // Load notifications
+        function loadNotifications() {
+            // This will be connected to real API later
+            const notifications = [
+                {
+                    type: 'success',
+                    title: 'Trade Executed',
+                    message: 'Bought 10 shares of RELIANCE at ₹2,450',
+                    time: '2 minutes ago'
+                },
+                {
+                    type: 'info',
+                    title: 'Pattern Detected',
+                    message: 'Hammer pattern detected on NIFTY50 5m chart',
+                    time: '15 minutes ago'
+                }
+            ];
+
+            const notificationList = document.getElementById('notificationList');
+            const notificationCount = document.getElementById('notification-count');
+
+            if (notifications.length === 0) {
+                notificationList.innerHTML = '<div class="notification-empty">No new notifications</div>';
+                notificationCount.textContent = '0';
+                return;
+            }
+
+            notificationCount.textContent = notifications.length;
+
+            notificationList.innerHTML = notifications.map(notif => `
+                <div class="notification-item">
+                    <div class="notification-item__icon notification-item__icon--${notif.type}">
+                        <i data-lucide="${notif.type === 'success' ? 'check-circle' : 'info'}" class="icon-16"></i>
+                    </div>
+                    <div class="notification-item__content">
+                        <div class="notification-item__title">${notif.title}</div>
+                        <div class="notification-item__message">${notif.message}</div>
+                        <div class="notification-item__time">${notif.time}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Re-initialize Lucide icons
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setActiveMenuItem();
+            loadNotifications();
+        });
+
     </script>
 </body>
 </html>

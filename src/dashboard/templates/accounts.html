@@ -6,7 +6,36 @@
     <title>Scalping Bot - Accounts & Broker Connections</title>
 
     <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest">
+
+        // Initialize top bar on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Restore saved portfolio
+            const savedPortfolio = localStorage.getItem('selectedPortfolio') || '1';
+            const selector = document.getElementById('topbar-account-selector');
+            if (selector) {
+                selector.value = savedPortfolio;
+            }
+
+            // Mark current page as active
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href === currentPath || (currentPath === '/' && href === '/')) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Load funds
+            loadTopBarFunds();
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+
+    </script>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -183,7 +212,7 @@
         /* Main Content */
         .main {
             flex: 1;
-            margin-left: 240px;
+            margin-left: 0;
             display: flex;
             flex-direction: column;
         }
@@ -848,60 +877,50 @@
                 height: 200px;
             }
         }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .topbar {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 12px;
+            }
+
+            .topbar-nav {
+                order: 3;
+                width: 100%;
+                margin-top: 12px;
+                justify-content: flex-start;
+                overflow-x: auto;
+            }
+
+            .topbar-actions {
+                gap: 8px;
+            }
+
+            .funds-label,
+            .topbar-status {
+                display: none;
+            }
+        }
+
     </style>
 </head>
 <body>
     <div class="app">
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar__logo">
-                <div class="sidebar__logo-icon">S</div>
-                <span class="sidebar__logo-text">Scalping Bot</span>
-            </div>
-
-            <nav style="flex: 1;">
-                <a href="/" class="nav-item">
-                    <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/accounts" class="nav-item active">
-                    <i data-lucide="wallet" style="width: 18px; height: 18px;"></i>
-                    <span>Accounts</span>
-                </a>
-                <a href="/strategies" class="nav-item">
-                    <i data-lucide="brain" style="width: 18px; height: 18px;"></i>
-                    <span>Strategies</span>
-                </a>
-                <a href="/analytics" class="nav-item">
-                    <i data-lucide="bar-chart-3" style="width: 18px; height: 18px;"></i>
-                    <span>Analytics</span>
-                </a>
-
-                <div class="nav-divider"></div>
-
-                <a href="/notifications" class="nav-item">
-                    <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
-                    <span>Notifications</span>
-                </a>
-                <a href="/settings" class="nav-item">
-                    <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
-                    <span>Settings</span>
-                </a>
-            </nav>
-
-            <div>
-                <a href="/help" class="nav-item">
-                    <i data-lucide="help-circle" style="width: 18px; height: 18px;"></i>
-                    <span>Help</span>
-                </a>
-            </div>
-        </aside>
+        
 
         <!-- Main Content -->
         <main class="main">
             <!-- Top Bar -->
             <header class="topbar">
                 <div class="topbar__left">
+                    <!-- Logo -->
+                    <a href="/" class="topbar__logo" style="text-decoration: none; color: inherit; cursor: pointer;">
+                        <div class="topbar__logo-icon">S</div>
+                        <span>Scalping Bot</span>
+                    </a>
                     <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">
                         <div class="hamburger__line"></div>
                         <div class="hamburger__line"></div>
@@ -926,16 +945,62 @@
                 </div>
 
                 <div class="topbar__right">
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
-                        <span class="topbar__badge">0</span>
-                    </button>
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
-                    </button>
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="user" style="width: 18px; height: 18px;"></i>
-                    </button>
+                    <!-- Notification Dropdown -->
+                    <div class="dropdown">
+                        <button class="topbar__icon-btn" onclick="toggleDropdown('notificationDropdown')" aria-label="Notifications">
+                            <i data-lucide="bell" class="icon-18"></i>
+                            <span class="topbar__badge" id="notification-count">0</span>
+                        </button>
+                        <div class="dropdown__menu notification-dropdown" id="notificationDropdown">
+                            <div class="dropdown__header">Notifications</div>
+                            <div class="notification-empty" id="notificationList">
+                                No new notifications
+                            </div>
+                            <div class="notification-footer">
+                                <button class="notification-footer__btn" onclick="window.location.href='/notifications'">
+                                    View All Notifications
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="dropdown">
+                        <button class="topbar__icon-btn" onclick="toggleDropdown('profileDropdown')" aria-label="User Profile">
+                            <i data-lucide="user" class="icon-18"></i>
+                        </button>
+                        <div class="dropdown__menu" id="profileDropdown">
+                            <a href="/" class="dropdown__item">
+                                <i data-lucide="layout-dashboard" class="icon-16"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="/accounts" class="dropdown__item">
+                                <i data-lucide="wallet" class="icon-16"></i>
+                                <span>Accounts</span>
+                            </a>
+                            <a href="/strategies" class="dropdown__item">
+                                <i data-lucide="brain" class="icon-16"></i>
+                                <span>Strategies</span>
+                            </a>
+                            <a href="/analytics" class="dropdown__item">
+                                <i data-lucide="bar-chart-3" class="icon-16"></i>
+                                <span>Analytics</span>
+                            </a>
+                            <div class="dropdown__divider"></div>
+                            <a href="/settings" class="dropdown__item">
+                                <i data-lucide="settings" class="icon-16"></i>
+                                <span>Settings</span>
+                            </a>
+                            <a href="/implementation-log" class="dropdown__item">
+                                <i data-lucide="list-checks" class="icon-16"></i>
+                                <span>Implementation Log</span>
+                            </a>
+                            <a href="/help" class="dropdown__item">
+                                <i data-lucide="help-circle" class="icon-16"></i>
+                                <span>Help</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </header>
 

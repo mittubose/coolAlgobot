@@ -1,6 +1,6 @@
 """
 Zerodha Kite Connect Authentication
-Handles OAuth2 login flow and token management
+Handles OAuth2 login flow and secure token management
 """
 
 import os
@@ -8,6 +8,7 @@ import logging
 from typing import Optional, Dict, Any
 from pathlib import Path
 from kiteconnect import KiteConnect
+from ..utils.encryption import SecureTokenStorage, EncryptionError
 
 
 class ZerodhaAuth:
@@ -29,6 +30,17 @@ class ZerodhaAuth:
         self.kite = KiteConnect(api_key=self.api_key)
         self.access_token = None
         self.logger = logging.getLogger('auth')
+
+        # Initialize secure token storage
+        try:
+            self.token_storage = SecureTokenStorage()
+            self.use_encryption = True
+            self.logger.info("Secure token storage enabled")
+        except EncryptionError as e:
+            self.logger.warning(f"Encryption not available: {e}")
+            self.logger.warning("Tokens will be stored in PLAIN TEXT (INSECURE)")
+            self.token_storage = None
+            self.use_encryption = False
 
     def get_login_url(self) -> str:
         """
@@ -79,35 +91,62 @@ class ZerodhaAuth:
 
     def load_access_token(self) -> bool:
         """
-        Load access token from file
+        Load access token securely from file
 
         Returns:
             True if token loaded successfully, False otherwise
         """
         token_file = Path("config/.access_token")
 
-        if token_file.exists():
-            try:
+        if not token_file.exists():
+            self.logger.debug("Token file not found")
+            return False
+
+        try:
+            if self.use_encryption and self.token_storage:
+                # Load encrypted token
+                token = self.token_storage.load_token(token_file)
+                if token:
+                    self.set_access_token(token)
+                    self.logger.info("Access token loaded and decrypted successfully")
+                    return True
+                else:
+                    self.logger.error("Failed to decrypt token")
+                    return False
+            else:
+                # Fallback: read plain text
                 with open(token_file, 'r') as f:
                     token = f.read().strip()
 
                 if token:
                     self.set_access_token(token)
-                    self.logger.info("Access token loaded from file")
+                    self.logger.info("Access token loaded from file (plain text)")
                     return True
-            except Exception as e:
-                self.logger.error(f"Failed to load access token: {e}")
+        except Exception as e:
+            self.logger.error(f"Failed to load access token: {e}")
 
         return False
 
     def _save_access_token(self, token: str):
-        """Save access token to file"""
+        """Save access token securely to file"""
         token_file = Path("config/.access_token")
 
         try:
-            with open(token_file, 'w') as f:
-                f.write(token)
-            self.logger.info("Access token saved to file")
+            if self.use_encryption and self.token_storage:
+                # Save encrypted token
+                success = self.token_storage.save_token(token, token_file)
+                if success:
+                    self.logger.info("Access token saved securely (encrypted)")
+                else:
+                    self.logger.error("Failed to save encrypted token")
+            else:
+                # Fallback: plain text (INSECURE)
+                token_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(token_file, 'w') as f:
+                    f.write(token)
+                os.chmod(token_file, 0o600)  # At least restrict permissions
+                self.logger.warning("Access token saved in PLAIN TEXT (insecure)")
+                self.logger.warning("Set ENCRYPTION_KEY in secrets.env for secure storage")
         except Exception as e:
             self.logger.error(f"Failed to save access token: {e}")
 

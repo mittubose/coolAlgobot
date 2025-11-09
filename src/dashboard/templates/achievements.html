@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scalping Bot - Achievements</title>
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest">
+
+        // Initialize top bar on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Restore saved portfolio
+            const savedPortfolio = localStorage.getItem('selectedPortfolio') || '1';
+            const selector = document.getElementById('topbar-account-selector');
+            if (selector) {
+                selector.value = savedPortfolio;
+            }
+
+            // Mark current page as active
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href === currentPath || (currentPath === '/' && href === '/')) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Load funds
+            loadTopBarFunds();
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+
+    </script>
+
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <!-- Page Styles -->
+    <link rel="stylesheet" href="/static/css/strategies.css">
+    <link rel="stylesheet" href="/static/css/achievements.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar__left">
+                    <!-- Logo -->
+                    <a href="/" class="topbar__logo" style="text-decoration: none; color: inherit; cursor: pointer;">
+                        <div class="topbar__logo-icon">S</div>
+                        <span>Scalping Bot</span>
+                    </a>
+                    <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">
+                        <div class="hamburger__line"></div>
+                        <div class="hamburger__line"></div>
+                        <div class="hamburger__line"></div>
+                    </button>
+
+                    <div class="topbar__account">
+                        <i data-lucide="building" class="topbar__account-icon"></i>
+                        <span class="topbar__account-name">Zerodha</span>
+                        <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: var(--color-text-tertiary);"></i>
+                    </div>
+
+                    <div class="topbar__funds">
+                        <span class="topbar__funds-label">Available</span>
+                        <span class="topbar__funds-value">₹100,000</span>
+                    </div>
+
+                    <div class="topbar__status">
+                        <span class="topbar__status-dot topbar__status-dot--offline"></span>
+                        <span class="topbar__status-text">Offline</span>
+                    </div>
+                </div>
+
+                <div class="topbar__right">
+                    <!-- Notification Dropdown -->
+                    <div class="dropdown">
+                        <button class="topbar__icon-btn" onclick="toggleDropdown('notificationDropdown')" aria-label="Notifications">
+                            <i data-lucide="bell" class="icon-18"></i>
+                            <span class="topbar__badge" id="notification-count">0</span>
+                        </button>
+                        <div class="dropdown__menu notification-dropdown" id="notificationDropdown">
+                            <div class="dropdown__header">Notifications</div>
+                            <div class="notification-empty" id="notificationList">
+                                No new notifications
+                            </div>
+                            <div class="notification-footer">
+                                <button class="notification-footer__btn" onclick="window.location.href='/notifications'">
+                                    View All Notifications
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="dropdown">
+                        <button class="topbar__icon-btn" onclick="toggleDropdown('profileDropdown')" aria-label="User Profile">
+                            <i data-lucide="user" class="icon-18"></i>
+                        </button>
+                        <div class="dropdown__menu" id="profileDropdown">
+                            <a href="/" class="dropdown__item">
+                                <i data-lucide="layout-dashboard" class="icon-16"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="/accounts" class="dropdown__item">
+                                <i data-lucide="wallet" class="icon-16"></i>
+                                <span>Accounts</span>
+                            </a>
+                            <a href="/strategies" class="dropdown__item">
+                                <i data-lucide="brain" class="icon-16"></i>
+                                <span>Strategies</span>
+                            </a>
+                            <a href="/analytics" class="dropdown__item">
+                                <i data-lucide="bar-chart-3" class="icon-16"></i>
+                                <span>Analytics</span>
+                            </a>
+                            <div class="dropdown__divider"></div>
+                            <a href="/settings" class="dropdown__item">
+                                <i data-lucide="settings" class="icon-16"></i>
+                                <span>Settings</span>
+                            </a>
+                            <a href="/implementation-log" class="dropdown__item">
+                                <i data-lucide="list-checks" class="icon-16"></i>
+                                <span>Implementation Log</span>
+                            </a>
+                            <a href="/help" class="dropdown__item">
+                                <i data-lucide="help-circle" class="icon-16"></i>
+                                <span>Help</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content">
+                <!-- Header -->
+                <div class="header">
+                    <div>
+                        <h1 class="header__title">Achievements</h1>
+                        <p class="header__subtitle">Track your trading milestones and unlock rewards</p>
+                    </div>
+                </div>
+
+                <!-- Achievement Stats -->
+                <div class="achievements-stats">
+                    <div class="achievement-stat-card">
+                        <div class="achievement-stat-card__icon">🏆</div>
+                        <div class="achievement-stat-card__value" id="totalAchievementPoints">0</div>
+                        <div class="achievement-stat-card__label">Total Points</div>
+                    </div>
+
+                    <div class="achievement-stat-card">
+                        <div class="achievement-stat-card__icon">✓</div>
+                        <div class="achievement-stat-card__value" id="achievementProgress">0/24</div>
+                        <div class="achievement-stat-card__label">Unlocked</div>
+                        <div class="achievement-progress">
+                            <div class="achievement-progress__bar" id="achievementProgressBar" style="width: 0%;">
+                                <span id="achievementPercent">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="achievement-stat-card">
+                        <div class="achievement-stat-card__icon">⭐</div>
+                        <div class="achievement-stat-card__value" id="rareCount">0</div>
+                        <div class="achievement-stat-card__label">Rare+</div>
+                    </div>
+
+                    <div class="achievement-stat-card">
+                        <div class="achievement-stat-card__icon">💎</div>
+                        <div class="achievement-stat-card__value" id="legendaryCount">0</div>
+                        <div class="achievement-stat-card__label">Legendary</div>
+                    </div>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="achievement-categories" id="categoryTabs">
+                    <button class="category-tab active" data-category="all" onclick="filterByCategory('all')">
+                        All Achievements
+                    </button>
+                    <button class="category-tab" data-category="milestones" onclick="filterByCategory('milestones')">
+                        Milestones
+                    </button>
+                    <button class="category-tab" data-category="performance" onclick="filterByCategory('performance')">
+                        Performance
+                    </button>
+                    <button class="category-tab" data-category="trading" onclick="filterByCategory('trading')">
+                        Trading
+                    </button>
+                    <button class="category-tab" data-category="risk" onclick="filterByCategory('risk')">
+                        Risk Management
+                    </button>
+                    <button class="category-tab" data-category="special" onclick="filterByCategory('special')">
+                        Special
+                    </button>
+                </div>
+
+                <!-- Achievements Grid -->
+                <div class="achievements-grid" id="achievementsGrid">
+                    <!-- Achievements will be loaded here by JavaScript -->
+                    <p style="color: var(--color-text-secondary); text-align: center; padding: 60px 20px; grid-column: 1/-1;">
+                        Loading achievements...
+                    </p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Mobile sidebar toggle
+        function toggleMobileSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.getElementById('hamburgerBtn');
+            sidebar.classList.toggle('mobile-hidden');
+            hamburger.classList.toggle('active');
+        }
+
+        // Hide sidebar on mobile by default
+        if (window.innerWidth <= 768) {
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelector('.sidebar').classList.add('mobile-hidden');
+            });
+        }
+
+        // Current filter
+        let currentCategory = 'all';
+
+        // Filter by category
+        function filterByCategory(category) {
+            currentCategory = category;
+
+            // Update active tab
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-category="${category}"]`).classList.add('active');
+
+            // Re-render achievements
+            renderAchievements();
+        }
+
+        // Render achievements
+        function renderAchievements() {
+            const grid = document.getElementById('achievementsGrid');
+            if (!grid) return;
+
+            // Filter achievements by category
+            let filteredAchievements = achievementManager.achievements;
+            if (currentCategory !== 'all') {
+                filteredAchievements = filteredAchievements.filter(a => a.category === currentCategory);
+            }
+
+            if (filteredAchievements.length === 0) {
+                grid.innerHTML = `
+                    <div class="achievements-empty" style="grid-column: 1/-1;">
+                        <div class="achievements-empty__icon">🏆</div>
+                        <h3 class="achievements-empty__title">No Achievements in this Category</h3>
+                        <p class="achievements-empty__description">Try selecting a different category</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            filteredAchievements.forEach(achievement => {
+                const isUnlocked = achievementManager.isUnlocked(achievement.id);
+                const lockedClass = isUnlocked ? 'achievement-card--unlocked' : 'achievement-card--locked';
+                const rarityClass = `achievement-card--${achievement.rarity}`;
+
+                html += `
+                    <div class="achievement-card ${lockedClass} ${rarityClass}">
+                        <div class="achievement-card__header">
+                            <div class="achievement-card__icon">${achievement.icon}</div>
+                            <div class="achievement-card__content">
+                                <div class="achievement-card__rarity achievement-card__rarity--${achievement.rarity}">
+                                    ${achievement.rarity}
+                                </div>
+                                <h3 class="achievement-card__name">
+                                    ${isUnlocked ? achievement.name : '???'}
+                                </h3>
+                            </div>
+                        </div>
+                        <p class="achievement-card__description">
+                            ${isUnlocked ? achievement.description : 'Complete the required task to unlock this achievement'}
+                        </p>
+                        <div class="achievement-card__footer">
+                            <div class="achievement-card__points">
+                                <i data-lucide="star" style="width: 16px; height: 16px;"></i>
+                                ${achievement.points} pts
+                            </div>
+                            <div class="achievement-card__category">
+                                ${getCategoryName(achievement.category)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function getCategoryName(category) {
+            const names = {
+                milestones: 'Milestone',
+                performance: 'Performance',
+                setup: 'Setup',
+                trading: 'Trading',
+                analysis: 'Analysis',
+                risk: 'Risk Mgmt',
+                special: 'Special'
+            };
+            return names[category] || category;
+        }
+
+        // Update stats
+        function updateStats() {
+            const progress = achievementManager.getProgress();
+            const totalPoints = achievementManager.getTotalPoints();
+
+            // Update total points
+            document.getElementById('totalAchievementPoints').textContent = totalPoints;
+
+            // Update unlocked count
+            document.getElementById('achievementProgress').textContent =
+                `${progress.unlocked}/${progress.total}`;
+
+            // Update progress bar
+            const progressBar = document.getElementById('achievementProgressBar');
+            progressBar.style.width = `${progress.percentage}%`;
+            document.getElementById('achievementPercent').textContent = `${progress.percentage}%`;
+
+            // Count rare+ and legendary
+            let rareCount = 0;
+            let legendaryCount = 0;
+
+            achievementManager.unlockedAchievements.forEach(id => {
+                const achievement = achievementManager.getAchievement(id);
+                if (achievement) {
+                    if (achievement.rarity === 'rare' || achievement.rarity === 'epic' || achievement.rarity === 'legendary') {
+                        rareCount++;
+                    }
+                    if (achievement.rarity === 'legendary') {
+                        legendaryCount++;
+                    }
+                }
+            });
+
+            document.getElementById('rareCount').textContent = rareCount;
+            document.getElementById('legendaryCount').textContent = legendaryCount;
+        }
+
+        // Load achievements on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            renderAchievements();
+            updateStats();
+
+            // Listen for achievement unlocks
+            window.addEventListener('achievementUnlocked', function() {
+                updateStats();
+                renderAchievements();
+            });
+        });
+
+        // Testing function (remove in production)
+        function testUnlock(achievementId) {
+            achievementManager.testUnlock(achievementId);
+        }
+
+        // Example: Test unlock first trade achievement
+        // testUnlock('first_trade');
+    </script>
+
+    <!-- Toast System -->
+    <script src="/static/js/toast.js"></script>
+
+    <!-- Achievement System -->
+    <script src="/static/js/achievements.js"></script>
+</body>
+</html>

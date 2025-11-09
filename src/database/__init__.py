@@ -14,6 +14,10 @@ from .models import (
     AuditLog
 )
 
+# Watchlist and recommendations (SQLite-based)
+from .db_manager import get_db_connection, init_database as init_watchlist_db
+from .watchlist_manager import WatchlistManager
+
 __all__ = [
     'Database',
     'get_session',
@@ -25,5 +29,8 @@ __all__ = [
     'Strategy',
     'Position',
     'Alert',
-    'AuditLog'
+    'AuditLog',
+    'get_db_connection',
+    'init_watchlist_db',
+    'WatchlistManager'
 ]

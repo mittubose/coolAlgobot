@@ -3,82 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scalping Bot - Help & Documentation</title>
+    <title>Help & Documentation - Scalping Bot</title>
 
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Fuse.js for search functionality -->
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
 
     <style>
-        /* Ultra-Compact Design Tokens v2.1 */
+        /* Design Tokens */
         :root {
-            /* Colors */
             --color-bg-primary: #0A0E14;
             --color-bg-secondary: #161B22;
             --color-bg-tertiary: #1F2937;
-
             --color-accent-primary: #20E7D0;
             --color-accent-secondary: #7C3AED;
-
             --color-success: #10B981;
             --color-error: #EF4444;
             --color-warning: #F59E0B;
             --color-info: #3B82F6;
-
             --color-text-primary: #F9FAFB;
             --color-text-secondary: #9CA3AF;
             --color-text-tertiary: #6B7280;
-
             --color-border: rgba(255, 255, 255, 0.08);
             --glass-bg: rgba(31, 41, 55, 0.6);
             --glass-border: rgba(255, 255, 255, 0.1);
-
-            /* Ultra-Compact Spacing (2px base) */
-            --space-1: 2px;
             --space-2: 4px;
             --space-3: 6px;
             --space-4: 8px;
             --space-5: 12px;
             --space-6: 16px;
             --space-8: 24px;
-
-            /* Card Padding (50% reduction) */
-            --card-padding-sm: 8px 12px;
-            --card-padding-md: 12px 16px;
-            --card-padding-lg: 16px 20px;
-
-            /* Compact Typography */
-            --text-2xs: 0.6875rem; /* 11px */
-            --text-xs: 0.75rem;    /* 12px */
-            --text-sm: 0.8125rem;  /* 13px */
-            --text-base: 0.875rem; /* 14px */
-            --text-lg: 1rem;       /* 16px */
-            --text-xl: 1.125rem;   /* 18px */
-            --text-2xl: 1.25rem;   /* 20px */
-            --text-3xl: 1.5rem;    /* 24px */
-
-            /* Reduced Border Radius */
-            --radius-sm: 4px;
+            --text-xs: 0.75rem;
+            --text-sm: 0.8125rem;
+            --text-base: 0.875rem;
+            --text-lg: 1rem;
+            --text-xl: 1.125rem;
+            --text-2xl: 1.25rem;
+            --text-3xl: 1.5rem;
             --radius-md: 6px;
             --radius-lg: 8px;
             --radius-xl: 12px;
-
-            /* Fonts */
             --font-primary: 'Inter', -apple-system, sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
-
-            /* Glassmorphism */
-            --glass-blur-light: blur(8px);
-            --glass-blur-medium: blur(12px);
-            --glass-blur-heavy: blur(16px);
-            --glass-bg-subtle: rgba(255, 255, 255, 0.05);
-            --glass-bg-light: rgba(255, 255, 255, 0.08);
-            --glass-bg-medium: rgba(255, 255, 255, 0.12);
-            --glass-border-subtle: rgba(255, 255, 255, 0.08);
-            --glass-border-light: rgba(255, 255, 255, 0.12);
-            --glass-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.15);
         }
 
         * {
@@ -92,699 +60,440 @@
             background: var(--color-bg-primary);
             color: var(--color-text-primary);
             font-size: var(--text-base);
-            line-height: 1.4;
+            line-height: 1.6;
         }
 
-        .app {
-            display: flex;
-            min-height: 100vh;
+        .help-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--space-8);
         }
 
-        /* Sidebar (Compact) */
-        .sidebar {
-            width: 240px;
-            background: var(--glass-bg-medium);
-            backdrop-filter: var(--glass-blur-medium);
-            -webkit-backdrop-filter: var(--glass-blur-medium);
-            border-right: 1px solid var(--glass-border-light);
-            position: fixed;
-            height: 100vh;
-            padding: var(--space-6);
-            display: flex;
-            flex-direction: column;
-            z-index: 100;
-            box-shadow: var(--glass-shadow-md);
-            transition: transform 300ms ease-in-out;
-        }
-
-        .sidebar.mobile-hidden {
-            transform: translateX(-100%);
-        }
-
-        .sidebar__logo {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            margin-bottom: var(--space-6);
-        }
-
-        .sidebar__logo-icon {
-            width: 24px;
-            height: 24px;
-            background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: var(--text-base);
-            color: var(--color-bg-primary);
-        }
-
-        .sidebar__logo-text {
-            font-size: 15px;
-            font-weight: 600;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            padding: var(--space-4) var(--space-5);
-            color: var(--color-text-secondary);
-            text-decoration: none;
-            border-radius: var(--radius-md);
-            transition: all 150ms;
-            margin-bottom: var(--space-2);
-            cursor: pointer;
-            border: none;
-            background: none;
-            width: 100%;
-            font-size: var(--text-sm);
-        }
-
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--color-text-primary);
-        }
-
-        .nav-item.active {
-            background: var(--color-bg-tertiary);
-            color: var(--color-accent-primary);
-            border: 1px solid var(--color-accent-primary);
-        }
-
-        .nav-divider {
-            height: 1px;
-            background: var(--color-border);
-            margin: var(--space-5) 0;
-        }
-
-        /* Main Content */
-        .main {
-            flex: 1;
-            margin-left: 240px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Top Bar (NEW) */
-        .topbar {
-            height: 48px;
-            background: var(--color-bg-secondary);
+        /* Header */
+        .help-header {
+            text-align: center;
+            margin-bottom: var(--space-8);
+            padding: var(--space-8) 0;
             border-bottom: 1px solid var(--color-border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 var(--space-6);
-            gap: var(--space-6);
-            position: sticky;
-            top: 0;
-            z-index: 50;
         }
 
-        .topbar__left,
-        .topbar__right {
-            display: flex;
-            align-items: center;
-            gap: var(--space-5);
+        .help-header__title {
+            font-size: var(--text-3xl);
+            font-weight: 700;
+            margin-bottom: var(--space-3);
+            background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .hamburger {
+        .help-header__subtitle {
+            font-size: var(--text-lg);
+            color: var(--color-text-secondary);
+        }
+
+        /* Search Box */
+        .search-box {
+            max-width: 600px;
+            margin: 0 auto var(--space-8);
+            position: relative;
+        }
+
+        .search-box__input {
+            width: 100%;
+            padding: var(--space-5) var(--space-6);
+            padding-left: 48px;
+            background: var(--color-bg-secondary);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-primary);
+            font-size: var(--text-base);
+            transition: all 200ms;
+        }
+
+        .search-box__input:focus {
+            outline: none;
+            border-color: var(--color-accent-primary);
+            box-shadow: 0 0 0 3px rgba(32, 231, 208, 0.1);
+        }
+
+        .search-box__icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-text-tertiary);
+            pointer-events: none;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            margin-top: var(--space-2);
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 100;
             display: none;
-            width: 32px;
-            height: 32px;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: var(--color-bg-tertiary);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
+        }
+
+        .search-results--visible {
+            display: block;
+        }
+
+        .search-result {
+            padding: var(--space-5) var(--space-6);
+            border-bottom: 1px solid var(--color-border);
             cursor: pointer;
-            gap: 4px;
-            transition: all 150ms;
+            transition: background 150ms;
         }
 
-        .hamburger:hover {
-            border-color: var(--color-accent-primary);
-        }
-
-        .hamburger__line {
-            width: 18px;
-            height: 2px;
-            background: var(--color-text-primary);
-            transition: all 300ms;
-            border-radius: 2px;
-        }
-
-        .hamburger.active .hamburger__line:nth-child(1) {
-            transform: rotate(45deg) translate(4px, 4px);
-        }
-
-        .hamburger.active .hamburger__line:nth-child(2) {
-            opacity: 0;
-        }
-
-        .hamburger.active .hamburger__line:nth-child(3) {
-            transform: rotate(-45deg) translate(4px, -4px);
-        }
-
-        .topbar__account {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            padding: var(--card-padding-sm);
+        .search-result:hover {
             background: var(--color-bg-tertiary);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all 150ms;
-            height: 32px;
         }
 
-        .topbar__account:hover {
-            border-color: var(--color-accent-primary);
-        }
-
-        .topbar__account-icon {
-            width: 16px;
-            height: 16px;
+        .search-result__title {
+            font-weight: 600;
+            margin-bottom: var(--space-2);
             color: var(--color-accent-primary);
         }
 
-        .topbar__account-name {
+        .search-result__snippet {
             font-size: var(--text-sm);
-            color: var(--color-text-primary);
-        }
-
-        .topbar__funds {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            padding: var(--card-padding-sm);
-            background: var(--color-bg-tertiary);
-            border-radius: var(--radius-md);
-            height: 32px;
-        }
-
-        .topbar__funds-label {
-            font-size: var(--text-2xs);
-            color: var(--color-text-tertiary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .topbar__funds-value {
-            font-size: var(--text-base);
-            font-weight: 600;
-            font-family: var(--font-mono);
-            color: var(--color-success);
-        }
-
-        .topbar__status {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            padding: var(--card-padding-sm);
-            background: var(--color-bg-tertiary);
-            border-radius: var(--radius-md);
-            height: 32px;
-        }
-
-        .topbar__status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        .topbar__status-dot--live {
-            background: var(--color-success);
-        }
-
-        .topbar__status-dot--offline {
-            background: var(--color-error);
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .topbar__status-text {
-            font-size: var(--text-xs);
             color: var(--color-text-secondary);
         }
 
-        .topbar__icon-btn {
-            position: relative;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--color-bg-tertiary);
-            border: 1px solid transparent;
-            border-radius: var(--radius-md);
-            color: var(--color-text-secondary);
-            cursor: pointer;
-            transition: all 150ms;
+        /* Quick Links */
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
         }
 
-        .topbar__icon-btn:hover {
-            border-color: var(--color-accent-primary);
-            color: var(--color-text-primary);
-        }
-
-        .topbar__badge {
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            min-width: 16px;
-            height: 16px;
-            padding: 0 4px;
-            background: var(--color-error);
-            color: white;
-            font-size: 10px;
-            font-weight: 600;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Content Area */
-        .content {
-            flex: 1;
+        .quick-link-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
             padding: var(--space-6);
-            overflow-y: auto;
-        }
-
-        /* Header (Compact) */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: var(--space-6);
-        }
-
-        .header__title {
-            font-size: var(--text-2xl);
-            font-weight: 600;
-            margin-bottom: var(--space-1);
-        }
-
-        .header__subtitle {
-            font-size: var(--text-sm);
-            color: var(--color-text-secondary);
-        }
-
-        .status-badge {
-            padding: var(--space-3) var(--space-5);
-            border-radius: var(--radius-md);
-            font-size: var(--text-xs);
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            border: 1px solid;
-        }
-
-        .status-badge--stopped {
-            background: rgba(156, 163, 175, 0.1);
-            border-color: var(--color-text-tertiary);
-            color: var(--color-text-secondary);
-        }
-
-        .status-badge--running {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: var(--color-success);
-            color: var(--color-success);
-        }
-
-        /* Integration Banner (NEW) */
-        .integration-banner {
-            display: flex;
-            align-items: center;
-            gap: var(--space-5);
-            padding: var(--card-padding-md);
-            border-radius: var(--radius-lg);
-            margin-bottom: var(--space-6);
-            border: 1px solid;
-            background: rgba(245, 158, 11, 0.1);
-            border-color: var(--color-warning);
-        }
-
-        .integration-banner__icon {
-            flex-shrink: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--color-warning);
-        }
-
-        .integration-banner__content {
-            flex: 1;
-        }
-
-        .integration-banner__title {
-            font-size: var(--text-base);
-            font-weight: 600;
-            margin-bottom: var(--space-1);
-        }
-
-        .integration-banner__message {
-            font-size: var(--text-xs);
-            color: var(--color-text-secondary);
-        }
-
-        /* Control Panel (Compact) */
-        .controls {
-            background: var(--color-bg-secondary);
-            padding: var(--card-padding-md);
-            border-radius: var(--radius-lg);
-            margin-bottom: var(--space-6);
-            display: flex;
-            gap: var(--space-5);
-            align-items: center;
-            border: 1px solid var(--color-border);
-        }
-
-        .btn {
-            padding: var(--space-3) var(--space-5);
-            border: none;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            font-size: var(--text-sm);
             cursor: pointer;
-            transition: all 150ms;
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            height: 32px;
+            transition: all 200ms;
         }
 
-        .btn:hover {
-            transform: translateY(-1px);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
-            color: var(--color-bg-primary);
-        }
-
-        .btn-primary:hover {
-            box-shadow: 0 4px 12px rgba(32, 231, 208, 0.3);
-        }
-
-        .btn-secondary {
-            background: var(--color-bg-tertiary);
-            color: var(--color-text-primary);
-            border: 1px solid var(--color-border);
-        }
-
-        .btn-danger {
-            background: var(--color-error);
-            color: white;
-        }
-
-        select {
-            padding: var(--card-padding-sm);
-            background: var(--color-bg-tertiary);
-            color: var(--color-text-primary);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
-            font-size: var(--text-sm);
-            cursor: pointer;
-            height: 32px;
-        }
-
-        /* Compact Stats Row (NEW) */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 0;
-            background: var(--color-bg-secondary);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            height: 72px;
-            padding: var(--card-padding-md);
-            margin-bottom: var(--space-6);
-        }
-
-        .stat {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: var(--space-1);
-            padding: 0 var(--space-4);
-        }
-
-        .stat__label {
-            font-size: var(--text-2xs);
-            font-weight: 600;
-            color: var(--color-text-tertiary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: var(--space-1);
-        }
-
-        .stat__value {
-            font-size: var(--text-2xl);
-            font-weight: 700;
-            font-family: var(--font-mono);
-            line-height: 1;
-            margin-bottom: var(--space-1);
-        }
-
-        .stat__change {
-            display: flex;
-            align-items: center;
-            gap: var(--space-1);
-            font-size: var(--text-2xs);
-            font-weight: 600;
-        }
-
-        .stat__change--up { color: var(--color-success); }
-        .stat__change--down { color: var(--color-error); }
-
-        .stat__meta {
-            font-size: var(--text-2xs);
-            color: var(--color-text-tertiary);
-        }
-
-        .stat__divider {
-            width: 1px;
-            background: var(--color-border);
-            margin: var(--space-4) 0;
-        }
-
-        /* Compact Chart (Height: 280px) */
-        .chart-card {
-            background: var(--color-bg-secondary);
-            border: 1px solid var(--color-border);
-            padding: var(--card-padding-lg);
-            border-radius: var(--radius-lg);
-            margin-bottom: var(--space-6);
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--space-5);
-            height: 28px;
-        }
-
-        .chart-header__title {
-            font-size: var(--text-lg);
-            font-weight: 600;
-        }
-
-        .chart-tabs {
-            display: flex;
-            gap: var(--space-1);
-            background: var(--color-bg-tertiary);
-            padding: 2px;
-            border-radius: var(--radius-md);
-        }
-
-        .chart-tab {
-            padding: var(--space-2) var(--space-5);
-            font-size: var(--text-xs);
-            font-weight: 600;
-            background: transparent;
-            border: none;
-            border-radius: var(--radius-sm);
-            color: var(--color-text-secondary);
-            cursor: pointer;
-            transition: all 150ms;
-            height: 24px;
-        }
-
-        .chart-tab.active {
-            background: var(--color-accent-primary);
-            color: var(--color-bg-primary);
-        }
-
-        .chart-container {
-            height: 240px;
-            position: relative;
-        }
-
-        /* Grid */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: var(--space-5);
-            margin-bottom: var(--space-6);
-        }
-
-        /* Card (Compact) */
-        .card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            padding: var(--card-padding-lg);
-            border-radius: var(--radius-lg);
-            transition: all 150ms;
-        }
-
-        .card:hover {
+        .quick-link-card:hover {
             border-color: var(--color-accent-primary);
             transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
 
-        .card__header {
+        .quick-link-card__icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+            border-radius: var(--radius-lg);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
             margin-bottom: var(--space-5);
         }
 
-        .card__title {
+        .quick-link-card__title {
             font-size: var(--text-lg);
             font-weight: 600;
-        }
-
-        /* Table (Compact) */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            text-align: left;
-            font-size: var(--text-2xs);
-            color: var(--color-text-secondary);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: var(--space-3);
-            border-bottom: 1px solid var(--color-border);
-        }
-
-        td {
-            padding: var(--space-4) var(--space-3);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-            font-size: var(--text-sm);
-        }
-
-        tr:hover {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .table-symbol {
-            font-weight: 600;
-        }
-
-        .table-pnl {
-            font-weight: 600;
-            font-family: var(--font-mono);
-        }
-
-        .table-pnl--positive { color: var(--color-success); }
-        .table-pnl--negative { color: var(--color-error); }
-
-        /* Logs (Compact) */
-        .log-viewer {
-            background: #0d1117;
-            padding: var(--space-5);
-            border-radius: var(--radius-md);
-            max-height: 300px;
-            overflow-y: auto;
-            font-family: var(--font-mono);
-            font-size: var(--text-xs);
-            line-height: 1.5;
-        }
-
-        .log-entry {
-            display: flex;
-            gap: var(--space-3);
             margin-bottom: var(--space-2);
         }
 
-        .log-timestamp {
-            color: var(--color-text-tertiary);
-            flex-shrink: 0;
-        }
-
-        .log-level {
-            flex-shrink: 0;
-            font-weight: 600;
-        }
-
-        .log-level--INFO { color: var(--color-info); }
-        .log-level--SUCCESS { color: var(--color-success); }
-        .log-level--WARNING { color: var(--color-warning); }
-        .log-level--ERROR { color: var(--color-error); }
-
-        /* Alert */
-        .alert {
-            padding: var(--card-padding-md);
-            border-radius: var(--radius-md);
-            margin-bottom: var(--space-5);
-            display: flex;
-            align-items: flex-start;
-            gap: var(--space-3);
-            border: 1px solid;
+        .quick-link-card__description {
             font-size: var(--text-sm);
+            color: var(--color-text-secondary);
         }
 
-        .alert-success {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: var(--color-success);
-            color: var(--color-success);
+        /* Tabs */
+        .help-tabs {
+            display: flex;
+            gap: var(--space-2);
+            margin-bottom: var(--space-6);
+            border-bottom: 2px solid var(--color-border);
+            overflow-x: auto;
         }
 
-        .alert-error {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: var(--color-error);
-            color: var(--color-error);
+        .help-tab {
+            padding: var(--space-5) var(--space-6);
+            background: none;
+            border: none;
+            color: var(--color-text-secondary);
+            font-size: var(--text-base);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            white-space: nowrap;
         }
 
-        .alert-warning {
-            background: rgba(245, 158, 11, 0.1);
-            border-color: var(--color-warning);
-            color: var(--color-warning);
+        .help-tab:hover {
+            color: var(--color-text-primary);
         }
 
-        /* Animations */
+        .help-tab--active {
+            color: var(--color-accent-primary);
+            border-bottom-color: var(--color-accent-primary);
+        }
+
+        /* Content Section */
+        .help-content {
+            display: none;
+        }
+
+        .help-content--active {
+            display: block;
+            animation: fadeIn 300ms;
+        }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .fade-in {
-            animation: fadeIn 300ms ease-out;
+        /* FAQ Section */
+        .faq-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+
+        .faq-item {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 200ms;
+        }
+
+        .faq-item--open {
+            border-color: var(--color-accent-primary);
+        }
+
+        .faq-question {
+            padding: var(--space-6);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            transition: background 150ms;
+        }
+
+        .faq-question:hover {
+            background: var(--color-bg-tertiary);
+        }
+
+        .faq-question__text {
+            font-size: var(--text-base);
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .faq-question__icon {
+            transition: transform 200ms;
+            color: var(--color-text-tertiary);
+        }
+
+        .faq-item--open .faq-question__icon {
+            transform: rotate(180deg);
+            color: var(--color-accent-primary);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 300ms ease-out;
+        }
+
+        .faq-item--open .faq-answer {
+            max-height: 2000px;
+        }
+
+        .faq-answer__content {
+            padding: 0 var(--space-6) var(--space-6) var(--space-6);
+            color: var(--color-text-secondary);
+            font-size: var(--text-sm);
+            line-height: 1.8;
+        }
+
+        .faq-answer__content p {
+            margin-bottom: var(--space-4);
+        }
+
+        .faq-answer__content ul,
+        .faq-answer__content ol {
+            margin-left: var(--space-6);
+            margin-bottom: var(--space-4);
+        }
+
+        .faq-answer__content li {
+            margin-bottom: var(--space-2);
+        }
+
+        .faq-answer__content code {
+            background: var(--color-bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.85em;
+            color: var(--color-accent-primary);
+        }
+
+        .faq-answer__content pre {
+            background: var(--color-bg-tertiary);
+            padding: var(--space-5);
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            margin-bottom: var(--space-4);
+        }
+
+        .faq-answer__content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        /* User Flow Section */
+        .flow-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-8);
+            margin-bottom: var(--space-6);
+        }
+
+        .flow-card__title {
+            font-size: var(--text-xl);
+            font-weight: 600;
+            margin-bottom: var(--space-6);
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .flow-card__icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-6);
+        }
+
+        .flow-step {
+            display: flex;
+            gap: var(--space-5);
+        }
+
+        .flow-step__number {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            background: var(--color-accent-primary);
+            color: var(--color-bg-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: var(--text-base);
+        }
+
+        .flow-step__content {
+            flex: 1;
+        }
+
+        .flow-step__title {
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+            color: var(--color-text-primary);
+        }
+
+        .flow-step__description {
+            color: var(--color-text-secondary);
+            font-size: var(--text-sm);
+            line-height: 1.8;
+        }
+
+        .flow-step__description ul {
+            margin-left: var(--space-6);
+            margin-top: var(--space-3);
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+            border: none;
+            border-radius: 50%;
+            color: var(--color-bg-primary);
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 200ms;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(32, 231, 208, 0.4);
+        }
+
+        .back-to-top--visible {
+            display: flex;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .help-container {
+                padding: var(--space-6);
+            }
+
+            .quick-links {
+                grid-template-columns: 1fr;
+            }
+
+            .help-tabs {
+                gap: 0;
+            }
+
+            .help-tab {
+                padding: var(--space-4) var(--space-5);
+                font-size: var(--text-sm);
+            }
         }
 
         /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
         }
 
         ::-webkit-scrollbar-track {
@@ -793,616 +502,1361 @@
 
         ::-webkit-scrollbar-thumb {
             background: var(--color-bg-tertiary);
-            border-radius: 3px;
+            border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
             background: var(--color-border);
         }
 
-        /* Responsive */
+        /* Category Badge */
+        .faq-category {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--color-bg-tertiary);
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--space-4);
+        }
+
+        .faq-category--getting-started { color: var(--color-info); }
+        .faq-category--trading { color: var(--color-success); }
+        .faq-category--charts { color: var(--color-warning); }
+        .faq-category--risk { color: var(--color-error); }
+        .faq-category--technical { color: var(--color-text-tertiary); }
+
+        /* Top Navigation Bar */
+        .help-topbar {
+            background: var(--color-bg-secondary);
+            border-bottom: 1px solid var(--color-border);
+            padding: var(--space-6);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .help-topbar__left {
+            display: flex;
+            align-items: center;
+            gap: var(--space-6);
+        }
+
+        .help-topbar__logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            text-decoration: none;
+            color: var(--color-text-primary);
+            font-weight: 600;
+            font-size: var(--text-lg);
+        }
+
+        .help-topbar__logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--color-bg-primary);
+        }
+
+        .help-topbar__back {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-4) var(--space-6);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: var(--text-sm);
+            transition: all 0.2s ease;
+        }
+
+        .help-topbar__back:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--color-accent-primary);
+            border-color: var(--color-accent-primary);
+            transform: translateX(-2px);
+        }
+
+        .help-topbar__nav {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .help-topbar__nav-link {
+            padding: var(--space-4) var(--space-5);
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: var(--text-sm);
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+
+        .help-topbar__nav-link:hover {
+            background: var(--glass-bg);
+            color: var(--color-accent-primary);
+        }
+
         @media (max-width: 768px) {
-            .sidebar {
-                width: 240px;
-                z-index: 200;
+            .help-topbar {
+                flex-wrap: wrap;
             }
 
-            .sidebar.mobile-hidden {
-                transform: translateX(-100%);
-            }
-
-            .main {
-                margin-left: 0;
-            }
-
-            .hamburger {
-                display: flex;
-            }
-
-            .topbar__account,
-            .topbar__funds,
-            .topbar__status {
-                display: none;
-            }
-
-            .stats-row {
-                grid-template-columns: repeat(2, 1fr);
-                height: auto;
-                padding: var(--space-5);
-                gap: var(--space-5);
-            }
-
-            .stat__divider {
-                display: none;
-            }
-
-            .grid-2 {
-                grid-template-columns: 1fr;
-            }
-
-            .content {
-                padding: var(--space-5);
-            }
-
-            .chart-container {
-                height: 200px;
+            .help-topbar__nav {
+                width: 100%;
+                margin-top: var(--space-4);
+                overflow-x: auto;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar__logo">
-                <div class="sidebar__logo-icon">S</div>
-                <span class="sidebar__logo-text">Scalping Bot</span>
-            </div>
-
-            <nav style="flex: 1;">
-                <a href="/" class="nav-item">
-                    <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/accounts" class="nav-item">
-                    <i data-lucide="wallet" style="width: 18px; height: 18px;"></i>
-                    <span>Accounts</span>
-                </a>
-                <a href="/strategies" class="nav-item">
-                    <i data-lucide="brain" style="width: 18px; height: 18px;"></i>
-                    <span>Strategies</span>
-                </a>
-                <a href="/analytics" class="nav-item">
-                    <i data-lucide="bar-chart-3" style="width: 18px; height: 18px;"></i>
-                    <span>Analytics</span>
-                </a>
-
-                <div class="nav-divider"></div>
-
-                <a href="/notifications" class="nav-item">
-                    <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
-                    <span>Notifications</span>
-                </a>
-                <a href="/settings" class="nav-item">
-                    <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
-                    <span>Settings</span>
-                </a>
-            </nav>
-
-            <div>
-                <a href="/help" class="nav-item active">
-                    <i data-lucide="help-circle" style="width: 18px; height: 18px;"></i>
-                    <span>Help</span>
-                </a>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main">
-            <!-- Top Bar -->
-            <header class="topbar">
-                <div class="topbar__left">
-                    <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()">
-                        <div class="hamburger__line"></div>
-                        <div class="hamburger__line"></div>
-                        <div class="hamburger__line"></div>
-                    </button>
-
-                    <div class="topbar__account">
-                        <i data-lucide="building" class="topbar__account-icon"></i>
-                        <span class="topbar__account-name">Zerodha</span>
-                        <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: var(--color-text-tertiary);"></i>
-                    </div>
-
-                    <div class="topbar__funds">
-                        <span class="topbar__funds-label">Available</span>
-                        <span class="topbar__funds-value" id="topbarFunds">₹100,000</span>
-                    </div>
-
-                    <div class="topbar__status">
-                        <span class="topbar__status-dot topbar__status-dot--offline" id="topbarStatusDot"></span>
-                        <span class="topbar__status-text" id="topbarStatusText">Offline</span>
-                    </div>
-                </div>
-
-                <div class="topbar__right">
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
-                        <span class="topbar__badge">0</span>
-                    </button>
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
-                    </button>
-                    <button class="topbar__icon-btn">
-                        <i data-lucide="user" style="width: 18px; height: 18px;"></i>
-                    </button>
-                </div>
-            </header>
-
-            <!-- Content Area -->
-            <div class="content">
-                <!-- Header -->
-                <div class="header">
-                    <div>
-                        <h1 class="header__title">Help & Documentation</h1>
-                        <p class="header__subtitle">Guides, tutorials, and FAQs</p>
-                    </div>
-                    <span class="status-badge status-badge--stopped" id="statusBadge">
-                        <i data-lucide="circle" style="width: 8px; height: 8px; fill: currentColor;"></i>
-                        Stopped
-                    </span>
-                </div>
-
-                <!-- Integration Banner -->
-                <div class="integration-banner" id="integrationBanner">
-                    <div class="integration-banner__icon">
-                        <i data-lucide="alert-triangle" style="width: 20px; height: 20px;"></i>
-                    </div>
-                    <div class="integration-banner__content">
-                        <h4 class="integration-banner__title">Authentication Required</h4>
-                        <p class="integration-banner__message">Connect to Zerodha to start trading with real-time data</p>
-                    </div>
-                    <button class="btn btn-primary">
-                        <i data-lucide="link" style="width: 16px; height: 16px;"></i>
-                        Connect Now
-                    </button>
-                </div>
-
-                <!-- Controls -->
-                <div class="controls fade-in">
-                    <select id="modeSelect">
-                        <option value="paper">Paper Trading</option>
-                        <option value="live">Live Trading</option>
-                    </select>
-
-                    <button class="btn btn-primary" onclick="startBot()">
-                        <i data-lucide="play" style="width: 16px; height: 16px;"></i>
-                        Start
-                    </button>
-                    <button class="btn btn-secondary" onclick="pauseBot()">
-                        <i data-lucide="pause" style="width: 16px; height: 16px;"></i>
-                        Pause
-                    </button>
-                    <button class="btn btn-secondary" onclick="stopBot()">
-                        <i data-lucide="square" style="width: 16px; height: 16px;"></i>
-                        Stop
-                    </button>
-                    <button class="btn btn-danger" onclick="emergencyStop()">
-                        <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i>
-                        Emergency Stop
-                    </button>
-                </div>
-
-                <!-- Alert Area -->
-                <div id="alertArea"></div>
-
-                <!-- Compact Stats Row -->
-                <div class="stats-row fade-in">
-                    <div class="stat">
-                        <div class="stat__label">DAILY P&L</div>
-                        <div class="stat__value" id="dailyPnl">₹0.00</div>
-                        <div class="stat__change stat__change--up" id="dailyChange">
-                            <i data-lucide="trending-up" style="width: 12px; height: 12px;"></i>
-                            <span>0.0%</span>
-                        </div>
-                    </div>
-
-                    <div class="stat__divider"></div>
-
-                    <div class="stat">
-                        <div class="stat__label">TOTAL P&L</div>
-                        <div class="stat__value" id="totalPnl">₹0.00</div>
-                        <div class="stat__meta">All Time</div>
-                    </div>
-
-                    <div class="stat__divider"></div>
-
-                    <div class="stat">
-                        <div class="stat__label">WIN RATE</div>
-                        <div class="stat__value" id="winRate">0.0%</div>
-                        <div class="stat__meta" id="winStats">0/0 trades</div>
-                    </div>
-
-                    <div class="stat__divider"></div>
-
-                    <div class="stat">
-                        <div class="stat__label">TRADES</div>
-                        <div class="stat__value" id="todayTrades">0</div>
-                        <div class="stat__meta">Today</div>
-                    </div>
-                </div>
-
-                <!-- Compact Chart -->
-                <div class="chart-card fade-in">
-                    <div class="chart-header">
-                        <h3 class="chart-header__title">Performance Overview</h3>
-                        <div class="chart-tabs">
-                            <button class="chart-tab active">1H</button>
-                            <button class="chart-tab">1D</button>
-                            <button class="chart-tab">1W</button>
-                            <button class="chart-tab">1M</button>
-                        </div>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="performanceChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Positions & Trades -->
-                <div class="grid-2">
-                    <!-- Current Positions -->
-                    <div class="card fade-in">
-                        <div class="card__header">
-                            <h3 class="card__title">Current Positions</h3>
-                            <button class="topbar__icon-btn">
-                                <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
-                            </button>
-                        </div>
-                        <div id="positionsContent">
-                            <p style="color: var(--color-text-secondary); text-align: center; padding: var(--space-8) 0; font-size: var(--text-sm);">
-                                No active positions
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Recent Trades -->
-                    <div class="card fade-in">
-                        <div class="card__header">
-                            <h3 class="card__title">Recent Trades</h3>
-                            <button class="topbar__icon-btn">
-                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
-                            </button>
-                        </div>
-                        <div id="tradesContent">
-                            <p style="color: var(--color-text-secondary); text-align: center; padding: var(--space-8) 0; font-size: var(--text-sm);">
-                                No trades yet
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Logs -->
-                <div class="card fade-in">
-                    <div class="card__header">
-                        <h3 class="card__title">Live Logs</h3>
-                        <div class="chart-tabs">
-                            <button class="chart-tab active" onclick="switchLogTab('system')">System</button>
-                            <button class="chart-tab" onclick="switchLogTab('trades')">Trades</button>
-                            <button class="chart-tab" onclick="switchLogTab('errors')">Errors</button>
-                        </div>
-                    </div>
-                    <div class="log-viewer" id="logViewer">
-                        <div class="log-entry">
-                            <span class="log-timestamp">00:00:00</span>
-                            <span class="log-level log-level--INFO">[INFO]</span>
-                            <span>Dashboard initialized and ready</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+    <!-- Top Navigation Bar -->
+    <div class="help-topbar">
+        <div class="help-topbar__left">
+            <a href="/" class="help-topbar__logo">
+                <div class="help-topbar__logo-icon">S</div>
+                <span>Scalping Bot</span>
+            </a>
+            <a href="/" class="help-topbar__back">
+                <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+                <span>Back to Dashboard</span>
+            </a>
+        </div>
+        <div class="help-topbar__nav">
+            <a href="/accounts" class="help-topbar__nav-link">Accounts</a>
+            <a href="/strategies" class="help-topbar__nav-link">Strategies</a>
+            <a href="/analytics" class="help-topbar__nav-link">Analytics</a>
+            <a href="/settings" class="help-topbar__nav-link">Settings</a>
+        </div>
     </div>
+
+    <div class="help-container">
+        <!-- Header -->
+        <div class="help-header">
+            <h1 class="help-header__title">Help & Documentation</h1>
+            <p class="help-header__subtitle">Find answers, learn trading strategies, and get started with your algorithmic trading journey</p>
+        </div>
+
+        <!-- Search Box -->
+        <div class="search-box">
+            <i data-lucide="search" class="search-box__icon"></i>
+            <input
+                type="text"
+                class="search-box__input"
+                id="searchInput"
+                placeholder="Search for help topics, FAQs, tutorials..."
+                autocomplete="off"
+            >
+            <div class="search-results" id="searchResults"></div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+            <div class="quick-link-card" onclick="switchTab('getting-started')">
+                <div class="quick-link-card__icon">
+                    <i data-lucide="rocket" style="width: 24px; height: 24px; color: var(--color-bg-primary);"></i>
+                </div>
+                <h3 class="quick-link-card__title">Getting Started</h3>
+                <p class="quick-link-card__description">Quick setup guide and first steps</p>
+            </div>
+
+            <div class="quick-link-card" onclick="switchTab('faq')">
+                <div class="quick-link-card__icon">
+                    <i data-lucide="help-circle" style="width: 24px; height: 24px; color: var(--color-bg-primary);"></i>
+                </div>
+                <h3 class="quick-link-card__title">FAQ</h3>
+                <p class="quick-link-card__description">Frequently asked questions</p>
+            </div>
+
+            <div class="quick-link-card" onclick="switchTab('trading')">
+                <div class="quick-link-card__icon">
+                    <i data-lucide="trending-up" style="width: 24px; height: 24px; color: var(--color-bg-primary);"></i>
+                </div>
+                <h3 class="quick-link-card__title">Trading Guide</h3>
+                <p class="quick-link-card__description">Learn to take trades and manage positions</p>
+            </div>
+
+            <div class="quick-link-card" onclick="switchTab('chart-indicators')">
+                <div class="quick-link-card__icon">
+                    <i data-lucide="bar-chart-3" style="width: 24px; height: 24px; color: var(--color-bg-primary);"></i>
+                </div>
+                <h3 class="quick-link-card__title">Chart & Indicators</h3>
+                <p class="quick-link-card__description">Master technical analysis tools</p>
+            </div>
+
+            <div class="quick-link-card" onclick="switchTab('stop-loss')">
+                <div class="quick-link-card__icon">
+                    <i data-lucide="shield" style="width: 24px; height: 24px; color: var(--color-bg-primary);"></i>
+                </div>
+                <h3 class="quick-link-card__title">Stop-Loss Management</h3>
+                <p class="quick-link-card__description">Protect your capital with stop-losses</p>
+            </div>
+
+            <div class="quick-link-card" onclick="window.location.href='/'">
+                <div class="quick-link-card__icon">
+                    <i data-lucide="arrow-left" style="width: 24px; height: 24px; color: var(--color-bg-primary);"></i>
+                </div>
+                <h3 class="quick-link-card__title">Back to Dashboard</h3>
+                <p class="quick-link-card__description">Return to main trading dashboard</p>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="help-tabs">
+            <button class="help-tab help-tab--active" data-tab="getting-started">Getting Started</button>
+            <button class="help-tab" data-tab="faq">FAQ</button>
+            <button class="help-tab" data-tab="trading">Trading Guide</button>
+            <button class="help-tab" data-tab="chart-indicators">Charts & Indicators</button>
+            <button class="help-tab" data-tab="stop-loss">Stop-Loss Guide</button>
+        </div>
+
+        <!-- Content Sections -->
+
+        <!-- Getting Started Section -->
+        <div class="help-content help-content--active" id="getting-started">
+            <div class="flow-card">
+                <h2 class="flow-card__title">
+                    <div class="flow-card__icon">
+                        <i data-lucide="rocket" style="width: 20px; height: 20px; color: var(--color-bg-primary);"></i>
+                    </div>
+                    Quick Start Guide (5 Minutes)
+                </h2>
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <div class="flow-step__number">1</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Install Dependencies</div>
+                            <div class="flow-step__description">
+                                Ensure you have Python 3.8+ and Node.js installed. Run:<br>
+                                <code>pip install -r requirements.txt</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">2</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Configure Your Broker</div>
+                            <div class="flow-step__description">
+                                Add your Zerodha API credentials to <code>.env</code> file:
+                                <ul>
+                                    <li><code>ZERODHA_API_KEY</code> - Your API key</li>
+                                    <li><code>ZERODHA_API_SECRET</code> - Your API secret</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">3</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Start the Dashboard</div>
+                            <div class="flow-step__description">
+                                Launch the trading dashboard:<br>
+                                <code>python run_dashboard.py</code><br>
+                                Open <code>http://localhost:5000</code> in your browser
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">4</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Select Paper Trading Mode</div>
+                            <div class="flow-step__description">
+                                ALWAYS start with paper trading to test strategies risk-free. Select "Paper Trading" mode from the dropdown.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">5</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Create Your First Strategy</div>
+                            <div class="flow-step__description">
+                                Navigate to Strategies → Create New → Select "EMA Crossover" template → Configure parameters → Save
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="help-content" id="faq">
+            <div class="faq-list" id="faqList">
+                <!-- FAQ items will be dynamically generated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Trading Guide Section -->
+        <div class="help-content" id="trading">
+            <div class="flow-card">
+                <h2 class="flow-card__title">
+                    <div class="flow-card__icon">
+                        <i data-lucide="trending-up" style="width: 20px; height: 20px; color: var(--color-bg-primary);"></i>
+                    </div>
+                    Taking Your First Trade
+                </h2>
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <div class="flow-step__number">1</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Open Trade Panel</div>
+                            <div class="flow-step__description">
+                                Click the "Manual Trade" button (top-right corner). The trade panel slides in from the right side.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">2</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Search & Select Symbol</div>
+                            <div class="flow-step__description">
+                                Type symbol name (e.g., "RELIANCE") in the search box. Select from dropdown. Current price displays automatically.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">3</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Choose Direction</div>
+                            <div class="flow-step__description">
+                                <ul>
+                                    <li>Click <strong>BUY</strong> (green button) for long position (bet on price increase)</li>
+                                    <li>Click <strong>SELL</strong> (red button) for short position (bet on price decrease)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">4</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Set Quantity</div>
+                            <div class="flow-step__description">
+                                Enter number of shares. The calculator shows:
+                                <ul>
+                                    <li>Total investment required</li>
+                                    <li>Maximum possible loss</li>
+                                    <li>Risk percentage (should be ≤2%)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">5</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Set Stop-Loss (REQUIRED)</div>
+                            <div class="flow-step__description">
+                                You MUST set a stop-loss:
+                                <ul>
+                                    <li>Enter stop-loss price OR</li>
+                                    <li>Enter stop-loss percentage (e.g., 2% below entry)</li>
+                                    <li>System validates 2:1 minimum risk-reward ratio</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">6</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Set Target Price</div>
+                            <div class="flow-step__description">
+                                Enter your profit target (take-profit level). Should be at least 2x your stop-loss distance.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">7</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Review Risk Metrics</div>
+                            <div class="flow-step__description">
+                                Check the risk summary:
+                                <ul>
+                                    <li>Risk per trade (max 2%)</li>
+                                    <li>Risk-reward ratio (min 2:1)</li>
+                                    <li>Total capital at risk</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">8</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Confirm Order</div>
+                            <div class="flow-step__description">
+                                Click "Place Order" button. A confirmation dialog appears showing all trade details. Review and confirm.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">9</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Monitor Position</div>
+                            <div class="flow-step__description">
+                                Your position appears in "Current Positions" table with:
+                                <ul>
+                                    <li>🟢 Green = Profitable</li>
+                                    <li>🔴 Red = In loss</li>
+                                    <li>Real-time P&L updates</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">10</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Exit Strategy</div>
+                            <div class="flow-step__description">
+                                Position automatically closes when:
+                                <ul>
+                                    <li>Target price hit → Take profit</li>
+                                    <li>Stop-loss hit → Limit loss</li>
+                                    <li>Manual close → Click "Close" button</li>
+                                    <li>End of day → Auto-square off (intraday)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart & Indicators Section -->
+        <div class="help-content" id="chart-indicators">
+            <div class="flow-card">
+                <h2 class="flow-card__title">
+                    <div class="flow-card__icon">
+                        <i data-lucide="bar-chart-3" style="width: 20px; height: 20px; color: var(--color-bg-primary);"></i>
+                    </div>
+                    Adding Indicators to Charts
+                </h2>
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <div class="flow-step__number">1</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Open Chart View</div>
+                            <div class="flow-step__description">
+                                Navigate to any symbol → Click "Chart" button → Full chart interface opens
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">2</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Access Indicators Menu</div>
+                            <div class="flow-step__description">
+                                Click "Indicators" button (top toolbar) → Dropdown menu appears with 50+ indicators
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">3</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Search or Browse Indicators</div>
+                            <div class="flow-step__description">
+                                Use search box or browse by category:
+                                <ul>
+                                    <li><strong>Trend:</strong> EMA, SMA, VWAP</li>
+                                    <li><strong>Momentum:</strong> RSI, MACD, Stochastic</li>
+                                    <li><strong>Volatility:</strong> Bollinger Bands, ATR</li>
+                                    <li><strong>Volume:</strong> Volume Profile, OBV</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">4</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Configure Indicator Settings</div>
+                            <div class="flow-step__description">
+                                After selecting indicator:
+                                <ul>
+                                    <li>Adjust period/length (e.g., RSI 14)</li>
+                                    <li>Change colors and line styles</li>
+                                    <li>Set overbought/oversold levels</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">5</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Apply Indicator</div>
+                            <div class="flow-step__description">
+                                Click "Apply" → Indicator appears on chart. Overlay indicators (like EMAs) appear on price chart. Oscillators (like RSI) appear in separate pane below.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">6</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Use Preset Combinations</div>
+                            <div class="flow-step__description">
+                                Popular preset combinations available:
+                                <ul>
+                                    <li><strong>Trend Trader:</strong> EMA 9/21 + VWAP + Volume</li>
+                                    <li><strong>Momentum Scalper:</strong> RSI 14 + MACD + Bollinger Bands</li>
+                                    <li><strong>Breakout Hunter:</strong> Volume Profile + ATR + Support/Resistance</li>
+                                    <li><strong>Pattern Detective:</strong> Candlestick patterns + Chart patterns + Trendlines</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">7</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Manage Indicators</div>
+                            <div class="flow-step__description">
+                                To remove or edit:
+                                <ul>
+                                    <li>Hover over indicator name (left panel)</li>
+                                    <li>Click settings icon to edit</li>
+                                    <li>Click X icon to remove</li>
+                                    <li>Drag to reorder</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">8</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Save Your Layout</div>
+                            <div class="flow-step__description">
+                                Click "Save Layout" → Give it a name → Your indicator combination is saved. Load it anytime with one click.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stop-Loss Management Section -->
+        <div class="help-content" id="stop-loss">
+            <div class="flow-card">
+                <h2 class="flow-card__title">
+                    <div class="flow-card__icon">
+                        <i data-lucide="shield" style="width: 20px; height: 20px; color: var(--color-bg-primary);"></i>
+                    </div>
+                    Stop-Loss Management Guide
+                </h2>
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <div class="flow-step__number">1</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Why Stop-Loss is MANDATORY</div>
+                            <div class="flow-step__description">
+                                Every trade MUST have a stop-loss to:
+                                <ul>
+                                    <li>Limit maximum loss per trade to 2% of capital</li>
+                                    <li>Prevent emotional decision-making</li>
+                                    <li>Automate risk management</li>
+                                    <li>Protect against sudden market crashes</li>
+                                </ul>
+                                The bot will REJECT any order without stop-loss.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">2</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Setting Initial Stop-Loss</div>
+                            <div class="flow-step__description">
+                                Three methods to set stop-loss:
+                                <ul>
+                                    <li><strong>Percentage-based:</strong> Enter % below entry (e.g., 2%)</li>
+                                    <li><strong>Price-based:</strong> Enter specific price level</li>
+                                    <li><strong>Indicator-based:</strong> Use recent swing low/high, support/resistance, or ATR</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">3</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Moving Stop-Loss on Chart</div>
+                            <div class="flow-step__description">
+                                To manually move stop-loss:
+                                <ul>
+                                    <li>Locate the red dotted line on chart (stop-loss level)</li>
+                                    <li>Hover over the line → Cursor changes to drag icon</li>
+                                    <li>Click and drag to new price level</li>
+                                    <li>Release → Confirmation dialog appears</li>
+                                    <li>Confirm → Stop-loss updated immediately</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">4</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Move to Breakeven</div>
+                            <div class="flow-step__description">
+                                When in profit, protect your capital:
+                                <ul>
+                                    <li>Right-click on position</li>
+                                    <li>Select "Move SL to Breakeven"</li>
+                                    <li>Stop-loss moves to entry price + brokerage</li>
+                                    <li>Now trading at zero risk!</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">5</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Enable Trailing Stop-Loss</div>
+                            <div class="flow-step__description">
+                                Trailing SL follows price in profitable direction:
+                                <ul>
+                                    <li>Click position → "Enable Trailing SL"</li>
+                                    <li>Set trail amount (e.g., ₹10 or 1%)</li>
+                                    <li>As price moves up, SL trails behind by set amount</li>
+                                    <li>If price reverses, SL stays at highest level</li>
+                                    <li>Locks in profits automatically!</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-step__number">6</div>
+                        <div class="flow-step__content">
+                            <div class="flow-step__title">Partial Exit Strategy</div>
+                            <div class="flow-step__description">
+                                Scale out of positions:
+                                <ul>
+                                    <li><strong>50% at 1R:</strong> When profit = initial risk, sell 50%, move SL to breakeven</li>
+                                    <li><strong>25% at 2R:</strong> At 2x risk, sell 25%, trail SL on remaining</li>
+                                    <li><strong>25% at target:</strong> Let final portion reach full target</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example Scenario -->
+            <div class="flow-card" style="margin-top: var(--space-8);">
+                <h2 class="flow-card__title">
+                    <div class="flow-card__icon">
+                        <i data-lucide="lightbulb" style="width: 20px; height: 20px; color: var(--color-bg-primary);"></i>
+                    </div>
+                    Trailing Stop-Loss Example
+                </h2>
+                <div style="background: var(--color-bg-tertiary); padding: var(--space-6); border-radius: var(--radius-lg); font-family: var(--font-mono); font-size: var(--text-sm);">
+                    <div style="color: var(--color-text-secondary); margin-bottom: var(--space-5);">
+                        <strong style="color: var(--color-accent-primary);">Scenario:</strong> RELIANCE @ ₹2,000 entry, ₹1,960 initial SL (₹40 risk)
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--color-border);">
+                                <th style="text-align: left; padding: var(--space-3); color: var(--color-text-tertiary);">Time</th>
+                                <th style="text-align: left; padding: var(--space-3); color: var(--color-text-tertiary);">Price</th>
+                                <th style="text-align: left; padding: var(--space-3); color: var(--color-text-tertiary);">Action</th>
+                                <th style="text-align: left; padding: var(--space-3); color: var(--color-text-tertiary);">Stop-Loss</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: var(--space-3); color: var(--color-text-secondary);">09:15</td>
+                                <td style="padding: var(--space-3); color: var(--color-text-primary);">₹2,000</td>
+                                <td style="padding: var(--space-3); color: var(--color-info);">Enter BUY</td>
+                                <td style="padding: var(--space-3); color: var(--color-error);">₹1,960</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: var(--space-3); color: var(--color-text-secondary);">09:20</td>
+                                <td style="padding: var(--space-3); color: var(--color-text-primary);">₹2,025</td>
+                                <td style="padding: var(--space-3); color: var(--color-warning);">Enable trailing (₹25)</td>
+                                <td style="padding: var(--space-3); color: var(--color-error);">₹1,960 (no change)</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: var(--space-3); color: var(--color-text-secondary);">09:30</td>
+                                <td style="padding: var(--space-3); color: var(--color-text-primary);">₹2,050</td>
+                                <td style="padding: var(--space-3); color: var(--color-success);">Trail triggers</td>
+                                <td style="padding: var(--space-3); color: var(--color-success);">₹1,985 (+₹25)</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: var(--space-3); color: var(--color-text-secondary);">09:45</td>
+                                <td style="padding: var(--space-3); color: var(--color-text-primary);">₹2,080</td>
+                                <td style="padding: var(--space-3); color: var(--color-success);">Trail triggers</td>
+                                <td style="padding: var(--space-3); color: var(--color-success);">₹2,015 (+₹30)</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: var(--space-3); color: var(--color-text-secondary);">10:00</td>
+                                <td style="padding: var(--space-3); color: var(--color-text-primary);">₹2,100</td>
+                                <td style="padding: var(--space-3); color: var(--color-success);">Trail triggers</td>
+                                <td style="padding: var(--space-3); color: var(--color-success);">₹2,035 (+₹20)</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: var(--space-3); color: var(--color-text-secondary);">10:15</td>
+                                <td style="padding: var(--space-3); color: var(--color-text-primary);">₹2,095</td>
+                                <td style="padding: var(--space-3); color: var(--color-text-secondary);">Price drops</td>
+                                <td style="padding: var(--space-3); color: var(--color-success);">₹2,035 (no change)</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: var(--space-3); color: var(--color-text-secondary);">10:30</td>
+                                <td style="padding: var(--space-3); color: var(--color-text-primary);">₹2,030</td>
+                                <td style="padding: var(--space-3); color: var(--color-warning);">SL Hit</td>
+                                <td style="padding: var(--space-3); color: var(--color-success);">Position Closed</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="margin-top: var(--space-5); padding-top: var(--space-5); border-top: 1px solid var(--color-border);">
+                        <div style="color: var(--color-success); font-weight: 600;">
+                            ✅ Result: Profit of ₹35/share (initial risk was ₹40)
+                        </div>
+                        <div style="color: var(--color-text-secondary); margin-top: var(--space-2);">
+                            Without trailing SL, might have held through reversal and lost money!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">
+        <i data-lucide="arrow-up" style="width: 24px; height: 24px;"></i>
+    </button>
 
     <script>
         // Initialize Lucide icons
         lucide.createIcons();
 
-        let currentLogType = 'system';
-        let performanceChart = null;
+        // FAQ Data
+        const faqData = [
+            {
+                category: 'getting-started',
+                categoryLabel: 'Getting Started',
+                question: 'What is the minimum capital required to start trading?',
+                answer: `
+                    <p><strong>Recommended Minimum: ₹50,000 - ₹1,00,000</strong></p>
+                    <p>While technically you can start with less, here's why this range is recommended:</p>
+                    <ul>
+                        <li><strong>₹50,000:</strong> Allows proper position sizing (2% risk = ₹1,000 per trade). You can take 2-3 simultaneous positions comfortably.</li>
+                        <li><strong>₹1,00,000:</strong> Ideal for diversification across multiple stocks and strategies.</li>
+                        <li><strong>Below ₹25,000:</strong> Difficult to follow proper risk management rules (2% of ₹25k = ₹500/trade is very limiting).</li>
+                    </ul>
+                    <p><strong>Paper Trading:</strong> Start with virtual money to test strategies. No minimum required!</p>
+                `
+            },
+            {
+                category: 'getting-started',
+                categoryLabel: 'Getting Started',
+                question: 'Which broker should I choose?',
+                answer: `
+                    <p><strong>Currently Supported: Zerodha (Recommended)</strong></p>
+                    <p>Zerodha is the best choice because:</p>
+                    <ul>
+                        <li>✅ Robust API with excellent documentation</li>
+                        <li>✅ Low brokerage (₹20 per order or 0.03%, whichever is lower)</li>
+                        <li>✅ Reliable execution and uptime</li>
+                        <li>✅ Large developer community and support</li>
+                        <li>✅ Virtual trading available for testing</li>
+                    </ul>
+                    <p><strong>Coming Soon:</strong> Angel One, Kotak Securities integration (in development)</p>
+                `
+            },
+            {
+                category: 'getting-started',
+                categoryLabel: 'Getting Started',
+                question: 'How do I connect to Zerodha? (Setup API Credentials)',
+                answer: `
+                    <p><strong>Complete Guide to Connecting Zerodha:</strong></p>
 
-        // Initialize Chart (Compact 240px height)
-        function initChart() {
-            const ctx = document.getElementById('performanceChart');
-            if (!ctx) return;
+                    <p><strong>Step 1: Get Kite Connect API Access</strong></p>
+                    <ol>
+                        <li>Visit <a href="https://kite.trade" target="_blank" style="color: var(--color-accent-primary);">https://kite.trade</a></li>
+                        <li>Sign up for Kite Connect subscription (₹2,000/month)</li>
+                        <li>Create a new app in the Kite Connect dashboard</li>
+                        <li>Note down your <strong>API Key</strong> and <strong>API Secret</strong></li>
+                    </ol>
 
-            const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 240);
-            gradient.addColorStop(0, 'rgba(32, 231, 208, 0.2)');
-            gradient.addColorStop(1, 'rgba(32, 231, 208, 0)');
+                    <p><strong>Step 2: Configure in Scalping Bot</strong></p>
+                    <ol>
+                        <li>In the dashboard, click the "Connect Now" button (it redirects to Settings)</li>
+                        <li>Go to <strong>Settings → Broker</strong> tab (or navigate directly to <code>/settings</code>)</li>
+                        <li>Select <strong>Zerodha Kite</strong> as Primary Broker (already selected by default)</li>
+                        <li>Enter your credentials:
+                            <ul>
+                                <li><strong>API Key:</strong> Paste your Kite Connect API key</li>
+                                <li><strong>API Secret:</strong> Paste your API secret (will be encrypted)</li>
+                                <li><strong>User ID:</strong> Your Zerodha client ID (e.g., AB1234)</li>
+                            </ul>
+                        </li>
+                        <li>Enable <strong>Auto-reconnect on disconnect</strong> (recommended)</li>
+                        <li>Click <strong>"Test Connection"</strong> to verify your credentials</li>
+                        <li>If successful, click <strong>"Save Broker Settings"</strong></li>
+                    </ol>
 
-            performanceChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['9:15', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '15:30'],
-                    datasets: [{
-                        label: 'P&L',
-                        data: [0, 150, -50, 200, 350, 300, 450, 500],
-                        borderColor: '#20E7D0',
-                        backgroundColor: gradient,
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        pointHoverBackgroundColor: '#20E7D0',
-                        pointHoverBorderColor: '#0A0E14',
-                        pointHoverBorderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            backgroundColor: 'rgba(31, 41, 55, 0.95)',
-                            titleColor: '#F9FAFB',
-                            bodyColor: '#9CA3AF',
-                            borderColor: 'rgba(255, 255, 255, 0.1)',
-                            borderWidth: 1,
-                            padding: 10,
-                            displayColors: false,
-                            titleFont: { size: 12 },
-                            bodyFont: { size: 11 }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.04)',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#6B7280',
-                                font: { size: 10 }
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.04)',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#6B7280',
-                                font: { size: 10 },
-                                callback: (value) => '₹' + value
-                            }
-                        }
-                    },
-                    interaction: {
-                        mode: 'nearest',
-                        axis: 'x',
-                        intersect: false
-                    }
+                    <p><strong>Step 3: First-Time Authentication</strong></p>
+                    <p>When you start trading for the first time each day:</p>
+                    <ul>
+                        <li>Zerodha requires a login via their web interface (for security)</li>
+                        <li>The bot will open a browser window</li>
+                        <li>Log in with your Zerodha credentials</li>
+                        <li>Authorize the app → You'll be redirected back</li>
+                        <li>Access token is generated and stored (valid until market close)</li>
+                    </ul>
+
+                    <p><strong>Alternative: Manual Configuration (Advanced)</strong></p>
+                    <p>You can also edit the configuration file directly:</p>
+                    <pre><code># config/secrets.env
+KITE_API_KEY=your_api_key_here
+KITE_API_SECRET=your_api_secret_here
+KITE_ACCESS_TOKEN=  # Auto-generated daily</code></pre>
+
+                    <p><strong>⚠️ Important Notes:</strong></p>
+                    <ul>
+                        <li><strong>Security:</strong> API credentials are encrypted before storage</li>
+                        <li><strong>Daily Login:</strong> Zerodha requires re-authentication each trading day</li>
+                        <li><strong>Paper Trading:</strong> Test without connecting to Zerodha (uses simulated data)</li>
+                        <li><strong>Rate Limits:</strong> Zerodha allows 3 orders/second (bot handles this automatically)</li>
+                    </ul>
+
+                    <p><strong>Troubleshooting Connection Issues:</strong></p>
+                    <ul>
+                        <li><strong>"Invalid API key":</strong> Double-check you copied the key correctly</li>
+                        <li><strong>"Token expired":</strong> Re-authenticate (happens daily at market open)</li>
+                        <li><strong>"Test failed":</strong> Verify your Kite Connect subscription is active</li>
+                        <li><strong>"Connection timeout":</strong> Check your internet connection and Zerodha API status</li>
+                    </ul>
+                `
+            },
+            {
+                category: 'getting-started',
+                categoryLabel: 'Getting Started',
+                question: 'How do I install TA-Lib?',
+                answer: `
+                    <p><strong>TA-Lib (Technical Analysis Library) Installation:</strong></p>
+                    <p><strong>macOS:</strong></p>
+                    <pre><code>brew install ta-lib
+pip install TA-Lib</code></pre>
+
+                    <p><strong>Ubuntu/Debian:</strong></p>
+                    <pre><code>sudo apt-get update
+sudo apt-get install ta-lib
+pip install TA-Lib</code></pre>
+
+                    <p><strong>Windows:</strong></p>
+                    <ol>
+                        <li>Download TA-Lib binary from: <code>https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib</code></li>
+                        <li>Install using: <code>pip install TA_Lib-0.4.XX-cpXX-cpXX-win_amd64.whl</code></li>
+                    </ol>
+
+                    <p><strong>Verify Installation:</strong></p>
+                    <pre><code>python -c "import talib; print(talib.__version__)"</code></pre>
+                `
+            },
+            {
+                category: 'trading',
+                categoryLabel: 'Trading Operations',
+                question: 'How do I start the trading bot?',
+                answer: `
+                    <p><strong>Step-by-Step Bot Startup:</strong></p>
+                    <ol>
+                        <li><strong>Launch Dashboard:</strong> Run <code>python run_dashboard.py</code> and open <code>http://localhost:5000</code></li>
+                        <li><strong>Select Mode:</strong> Choose "Paper Trading" (recommended) or "Live Trading" from dropdown</li>
+                        <li><strong>Choose Strategy:</strong> Select a pre-configured strategy or create new one</li>
+                        <li><strong>Review Settings:</strong> Check risk parameters (2% per trade, max 5 positions)</li>
+                        <li><strong>Click Start:</strong> Press the green "Start" button</li>
+                        <li><strong>Confirm:</strong> Review confirmation dialog, click "Yes, Start Bot"</li>
+                        <li><strong>Monitor:</strong> Bot status changes to "Running" (green badge), logs appear in real-time</li>
+                    </ol>
+                    <p><strong>⚠️ Live Trading Warning:</strong> Always test strategies in paper mode for at least 1 month before going live!</p>
+                `
+            },
+            {
+                category: 'trading',
+                categoryLabel: 'Trading Operations',
+                question: 'How are trading signals generated?',
+                answer: `
+                    <p><strong>Signal Generation Process:</strong></p>
+                    <p>Signals are generated by combining multiple factors:</p>
+
+                    <p><strong>1. Technical Indicators:</strong></p>
+                    <ul>
+                        <li>EMA crossovers (9/21, 50/200)</li>
+                        <li>RSI levels (oversold < 30, overbought > 70)</li>
+                        <li>MACD histogram crossovers</li>
+                        <li>Bollinger Band squeezes/breakouts</li>
+                    </ul>
+
+                    <p><strong>2. Pattern Recognition:</strong></p>
+                    <ul>
+                        <li>50+ candlestick patterns (hammer, doji, engulfing, etc.)</li>
+                        <li>16 chart patterns (double bottom, head & shoulders, triangles, etc.)</li>
+                        <li>Support/resistance breakouts</li>
+                    </ul>
+
+                    <p><strong>3. Confluence Scoring:</strong></p>
+                    <p>Signals ranked by confidence (0-100%):</p>
+                    <ul>
+                        <li><strong>80-100%:</strong> Strong signal (3+ indicators + pattern)</li>
+                        <li><strong>60-79%:</strong> Moderate signal (2 indicators + pattern)</li>
+                        <li><strong>Below 60%:</strong> Weak signal (filtered out)</li>
+                    </ul>
+
+                    <p><strong>4. Risk Validation:</strong></p>
+                    <ul>
+                        <li>Stop-loss placement check</li>
+                        <li>Risk-reward ratio validation (min 2:1)</li>
+                        <li>Position sizing calculation</li>
+                    </ul>
+
+                    <p>Only signals passing ALL checks are executed.</p>
+                `
+            },
+            {
+                category: 'trading',
+                categoryLabel: 'Trading Operations',
+                question: 'Can I close a position manually?',
+                answer: `
+                    <p><strong>Yes! Multiple Ways to Close Positions:</strong></p>
+
+                    <p><strong>Method 1: Quick Close Button</strong></p>
+                    <ul>
+                        <li>Go to "Current Positions" table</li>
+                        <li>Find your position</li>
+                        <li>Click red "Close" button</li>
+                        <li>Confirm → Position closes at market price</li>
+                    </ul>
+
+                    <p><strong>Method 2: Right-Click Context Menu</strong></p>
+                    <ul>
+                        <li>Right-click on position row</li>
+                        <li>Select "Close Position"</li>
+                        <li>Choose close type: Market (instant) or Limit (set price)</li>
+                        <li>Confirm</li>
+                    </ul>
+
+                    <p><strong>Method 3: Chart Context Menu</strong></p>
+                    <ul>
+                        <li>Right-click on position line in chart</li>
+                        <li>"Close Position" → Market or Limit</li>
+                    </ul>
+
+                    <p><strong>Method 4: Emergency Stop</strong></p>
+                    <ul>
+                        <li>Click red "Emergency Stop" button</li>
+                        <li>Closes ALL positions immediately</li>
+                        <li>Cancels all pending orders</li>
+                        <li>Use only in critical situations!</li>
+                    </ul>
+
+                    <p><strong>⚠️ Note:</strong> Manual close overrides stop-loss/target. P&L calculated at close price.</p>
+                `
+            },
+            {
+                category: 'charts',
+                categoryLabel: 'Charts & Indicators',
+                question: 'How do I view live charts?',
+                answer: `
+                    <p><strong>Accessing Live Charts:</strong></p>
+
+                    <p><strong>Method 1: From Positions Table</strong></p>
+                    <ul>
+                        <li>Current Positions → Click symbol name (e.g., "RELIANCE")</li>
+                        <li>Chart opens in new panel/tab</li>
+                    </ul>
+
+                    <p><strong>Method 2: From Dashboard</strong></p>
+                    <ul>
+                        <li>Click "Charts" in top navigation</li>
+                        <li>Search for symbol</li>
+                        <li>Select from dropdown</li>
+                    </ul>
+
+                    <p><strong>Chart Features:</strong></p>
+                    <ul>
+                        <li><strong>Timeframes:</strong> 1min, 5min, 15min, 1hr, 1day</li>
+                        <li><strong>Chart Types:</strong> Candlestick, Line, OHLC, Heikin-Ashi</li>
+                        <li><strong>Real-time Updates:</strong> Auto-refresh every 1 second</li>
+                        <li><strong>Position Markers:</strong> Entry price (blue), stop-loss (red), target (green)</li>
+                        <li><strong>Pattern Highlights:</strong> Detected patterns marked on chart</li>
+                    </ul>
+
+                    <p><strong>Keyboard Shortcuts:</strong></p>
+                    <ul>
+                        <li><code>+/-</code> → Zoom in/out</li>
+                        <li><code>Arrow keys</code> → Pan left/right</li>
+                        <li><code>R</code> → Reset zoom</li>
+                        <li><code>I</code> → Show/hide indicators</li>
+                    </ul>
+                `
+            },
+            {
+                category: 'charts',
+                categoryLabel: 'Charts & Indicators',
+                question: 'How do detected patterns appear on charts?',
+                answer: `
+                    <p><strong>Pattern Visualization:</strong></p>
+
+                    <p><strong>Candlestick Patterns (50+ patterns):</strong></p>
+                    <ul>
+                        <li>Highlighted with colored boxes around candles</li>
+                        <li>🟢 <strong>Green:</strong> Bullish patterns (hammer, morning star, bullish engulfing)</li>
+                        <li>🔴 <strong>Red:</strong> Bearish patterns (shooting star, evening star, bearish engulfing)</li>
+                        <li>Pattern name appears in tooltip on hover</li>
+                        <li>Confidence score shown (70-100%)</li>
+                    </ul>
+
+                    <p><strong>Chart Patterns (16 patterns):</strong></p>
+                    <ul>
+                        <li>Drawn with connecting lines between key points</li>
+                        <li><strong>Support/Resistance:</strong> Horizontal blue lines</li>
+                        <li><strong>Trendlines:</strong> Diagonal lines showing trend direction</li>
+                        <li><strong>Triangles/Wedges:</strong> Converging lines</li>
+                        <li><strong>Head & Shoulders:</strong> Neckline + formation outline</li>
+                    </ul>
+
+                    <p><strong>Pattern Details Panel:</strong></p>
+                    <ul>
+                        <li>Click pattern → Right panel opens</li>
+                        <li>Shows: Pattern type, confidence, target price, stop-loss suggestion</li>
+                        <li>"Trade This Pattern" button → Auto-fills trade form</li>
+                    </ul>
+
+                    <p><strong>Pattern Filters:</strong></p>
+                    <ul>
+                        <li>Click filter icon → Choose which patterns to display</li>
+                        <li>Filter by type, confidence, or timeframe</li>
+                        <li>Reduce clutter by hiding low-confidence patterns</li>
+                    </ul>
+                `
+            },
+            {
+                category: 'risk',
+                categoryLabel: 'Risk & Money Management',
+                question: 'What is the 2% risk rule?',
+                answer: `
+                    <p><strong>The 2% Risk Rule Explained:</strong></p>
+
+                    <p><strong>Core Principle:</strong> Never risk more than 2% of your total capital on a single trade.</p>
+
+                    <p><strong>Why 2%?</strong></p>
+                    <ul>
+                        <li>Survive 50 consecutive losses before blowing account (extremely rare)</li>
+                        <li>Prevents emotional decision-making during losing streaks</li>
+                        <li>Allows steady account growth with 60% win rate</li>
+                        <li>Industry standard used by professional traders</li>
+                    </ul>
+
+                    <p><strong>Example Calculation:</strong></p>
+                    <pre><code>Account Balance: ₹1,00,000
+2% Risk: ₹2,000 maximum loss per trade
+
+Trade Setup:
+- Stock: RELIANCE @ ₹2,000
+- Stop-Loss: ₹1,960 (₹40 risk per share)
+- Position Size: ₹2,000 / ₹40 = 50 shares
+- Total Investment: 50 × ₹2,000 = ₹1,00,000
+
+If stop-loss hits: Loss = 50 × ₹40 = ₹2,000 (exactly 2%)
+If target ₹2,080 hits: Profit = 50 × ₹80 = ₹4,000 (4%)
+Risk-Reward Ratio: 2:1 ✅</code></pre>
+
+                    <p><strong>The Bot Enforces This:</strong></p>
+                    <ul>
+                        <li>Calculates position size automatically</li>
+                        <li>Rejects orders exceeding 2% risk</li>
+                        <li>Adjusts quantity based on stop-loss distance</li>
+                        <li>Prevents over-leveraging</li>
+                    </ul>
+                `
+            },
+            {
+                category: 'risk',
+                categoryLabel: 'Risk & Money Management',
+                question: 'How many positions can I have open simultaneously?',
+                answer: `
+                    <p><strong>Maximum Simultaneous Positions: 5</strong></p>
+
+                    <p><strong>Why This Limit?</strong></p>
+                    <ul>
+                        <li><strong>Total Risk Cap:</strong> 5 positions × 2% = 10% maximum portfolio risk</li>
+                        <li><strong>Focus:</strong> Monitor and manage positions effectively</li>
+                        <li><strong>Capital Efficiency:</strong> Avoid over-diversification with small capital</li>
+                        <li><strong>Correlation Risk:</strong> Prevent taking too many correlated trades</li>
+                    </ul>
+
+                    <p><strong>Smart Position Management:</strong></p>
+                    <p>The bot automatically:</p>
+                    <ul>
+                        <li>Rejects new signals when 5 positions are open</li>
+                        <li>Queues high-confidence signals for when a position closes</li>
+                        <li>Prioritizes best risk-reward opportunities</li>
+                        <li>Diversifies across uncorrelated sectors</li>
+                    </ul>
+
+                    <p><strong>Position States:</strong></p>
+                    <ul>
+                        <li>🟢 <strong>Active:</strong> Counts toward 5-position limit</li>
+                        <li>🟡 <strong>Pending:</strong> Order placed, waiting for fill (counts toward limit)</li>
+                        <li>🔵 <strong>Closing:</strong> Exit order triggered (still counts until filled)</li>
+                        <li>⚪ <strong>Closed:</strong> Trade completed (frees up slot immediately)</li>
+                    </ul>
+
+                    <p><strong>⚠️ Pro Tip:</strong> Start with 2-3 positions until comfortable, then scale up to 5.</p>
+                `
+            },
+            {
+                category: 'technical',
+                categoryLabel: 'Technical Issues',
+                question: 'Dashboard shows "Port 5000 already in use" error',
+                answer: `
+                    <p><strong>Port Conflict Resolution:</strong></p>
+
+                    <p><strong>Solution 1: Kill Existing Process</strong></p>
+                    <pre><code># macOS/Linux
+lsof -ti:5000 | xargs kill -9
+
+# Windows
+netstat -ano | findstr :5000
+taskkill /PID [process_id] /F</code></pre>
+
+                    <p><strong>Solution 2: Use Different Port</strong></p>
+                    <pre><code># Edit run_dashboard.py
+app.run(host='0.0.0.0', port=5001)  # Change 5000 to 5001
+
+# Then access: http://localhost:5001</code></pre>
+
+                    <p><strong>Solution 3: Set Environment Variable</strong></p>
+                    <pre><code># macOS/Linux
+export FLASK_RUN_PORT=5001
+python run_dashboard.py
+
+# Windows
+set FLASK_RUN_PORT=5001
+python run_dashboard.py</code></pre>
+
+                    <p><strong>Verify Port is Free:</strong></p>
+                    <pre><code># macOS/Linux
+lsof -i :5000
+
+# Windows
+netstat -ano | findstr :5000</code></pre>
+                `
+            }
+        ];
+
+        // Render FAQ
+        function renderFAQ() {
+            const faqList = document.getElementById('faqList');
+            faqList.innerHTML = '';
+
+            faqData.forEach((faq, index) => {
+                const faqItem = document.createElement('div');
+                faqItem.className = 'faq-item';
+                faqItem.innerHTML = `
+                    <div class="faq-question" onclick="toggleFAQ(${index})">
+                        <div>
+                            <div class="faq-category faq-category--${faq.category}">${faq.categoryLabel}</div>
+                            <div class="faq-question__text">${faq.question}</div>
+                        </div>
+                        <i data-lucide="chevron-down" class="faq-question__icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer__content">${faq.answer}</div>
+                    </div>
+                `;
+                faqList.appendChild(faqItem);
+            });
+
+            lucide.createIcons();
+        }
+
+        // Toggle FAQ item
+        function toggleFAQ(index) {
+            const faqItems = document.querySelectorAll('.faq-item');
+            const item = faqItems[index];
+
+            // Close all other items
+            faqItems.forEach((otherItem, otherIndex) => {
+                if (otherIndex !== index) {
+                    otherItem.classList.remove('faq-item--open');
                 }
             });
+
+            // Toggle current item
+            item.classList.toggle('faq-item--open');
         }
 
-        // Update Dashboard
-        function updateDashboard() {
-            fetch('/api/status')
-                .then(r => r.json())
-                .then(data => {
-                    // Update status badge
-                    const badge = document.getElementById('statusBadge');
-                    badge.className = `status-badge status-badge--${data.status}`;
-                    badge.innerHTML = `
-                        <i data-lucide="circle" style="width: 8px; height: 8px; fill: currentColor;"></i>
-                        ${data.status.charAt(0).toUpperCase() + data.status.slice(1)}
-                    `;
+        // Tab switching
+        function switchTab(tabName) {
+            // Update tabs
+            document.querySelectorAll('.help-tab').forEach(tab => {
+                tab.classList.remove('help-tab--active');
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('help-tab--active');
+                }
+            });
 
-                    // Update topbar status
-                    const statusDot = document.getElementById('topbarStatusDot');
-                    const statusText = document.getElementById('topbarStatusText');
-                    if (data.status === 'running') {
-                        statusDot.className = 'topbar__status-dot topbar__status-dot--live';
-                        statusText.textContent = 'Live';
-                    } else {
-                        statusDot.className = 'topbar__status-dot topbar__status-dot--offline';
-                        statusText.textContent = 'Offline';
-                    }
+            // Update content
+            document.querySelectorAll('.help-content').forEach(content => {
+                content.classList.remove('help-content--active');
+                if (content.id === tabName) {
+                    content.classList.add('help-content--active');
+                }
+            });
 
-                    lucide.createIcons();
-
-                    // Update stats
-                    updateStatValue('dailyPnl', data.pnl.daily);
-                    updateStatValue('totalPnl', data.pnl.total);
-                    document.getElementById('winRate').textContent = data.stats.win_rate.toFixed(1) + '%';
-                    document.getElementById('winStats').textContent =
-                        `${data.stats.winning_trades}/${data.stats.total_trades} trades`;
-                    document.getElementById('todayTrades').textContent = data.stats.total_trades;
-
-                    // Update positions and trades
-                    updatePositions(data.positions);
-                    updateTrades(data.trades);
-
-                    // Hide integration banner if authenticated
-                    if (data.authenticated) {
-                        document.getElementById('integrationBanner').style.display = 'none';
-                    }
-                })
-                .catch(e => console.error('Update failed:', e));
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function updateStatValue(id, value) {
-            const el = document.getElementById(id);
-            el.textContent = '₹' + value.toFixed(2);
-            if (value > 0) {
-                el.style.color = '#10B981';
-            } else if (value < 0) {
-                el.style.color = '#EF4444';
+        // Search functionality
+        let fuse;
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+
+        function initSearch() {
+            // Create searchable content
+            const searchableContent = [];
+
+            faqData.forEach((faq, index) => {
+                searchableContent.push({
+                    type: 'faq',
+                    title: faq.question,
+                    content: faq.answer.replace(/<[^>]*>/g, ''),
+                    category: faq.categoryLabel,
+                    index: index
+                });
+            });
+
+            // Initialize Fuse.js
+            fuse = new Fuse(searchableContent, {
+                keys: ['title', 'content', 'category'],
+                threshold: 0.3,
+                includeScore: true,
+                minMatchCharLength: 2
+            });
+        }
+
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+
+            if (query.length < 2) {
+                searchResults.classList.remove('search-results--visible');
+                return;
+            }
+
+            const results = fuse.search(query);
+            displaySearchResults(results);
+        });
+
+        function displaySearchResults(results) {
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="search-result"><div class="search-result__title">No results found</div></div>';
+                searchResults.classList.add('search-results--visible');
+                return;
+            }
+
+            searchResults.innerHTML = '';
+            results.slice(0, 5).forEach(result => {
+                const item = result.item;
+                const resultEl = document.createElement('div');
+                resultEl.className = 'search-result';
+                resultEl.onclick = () => goToResult(item);
+
+                let snippet = item.content.substring(0, 150) + '...';
+
+                resultEl.innerHTML = `
+                    <div class="search-result__title">${item.title}</div>
+                    <div class="search-result__snippet">${snippet}</div>
+                `;
+                searchResults.appendChild(resultEl);
+            });
+
+            searchResults.classList.add('search-results--visible');
+        }
+
+        function goToResult(item) {
+            if (item.type === 'faq') {
+                switchTab('faq');
+                setTimeout(() => {
+                    toggleFAQ(item.index);
+                    const faqItems = document.querySelectorAll('.faq-item');
+                    faqItems[item.index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+
+            searchResults.classList.remove('search-results--visible');
+            searchInput.value = '';
+        }
+
+        // Close search results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.remove('search-results--visible');
+            }
+        });
+
+        // Back to top button
+        const backToTop = document.getElementById('backToTop');
+
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('back-to-top--visible');
             } else {
-                el.style.color = '#F9FAFB';
+                backToTop.classList.remove('back-to-top--visible');
             }
+        });
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function updatePositions(positions) {
-            const content = document.getElementById('positionsContent');
-            if (!positions || positions.length === 0) {
-                content.innerHTML = '<p style="color: var(--color-text-secondary); text-align: center; padding: var(--space-8) 0; font-size: var(--text-sm);">No active positions</p>';
-                return;
-            }
-
-            let html = '<table><thead><tr><th>Symbol</th><th>Qty</th><th>Price</th><th>P&L</th></tr></thead><tbody>';
-            positions.forEach(p => {
-                const pnl = (p.current_price - p.avg_price) * p.quantity;
-                const pnlClass = pnl > 0 ? 'positive' : 'negative';
-                html += `<tr>
-                    <td class="table-symbol">${p.symbol}</td>
-                    <td>${p.quantity}</td>
-                    <td>₹${p.current_price.toFixed(2)}</td>
-                    <td class="table-pnl table-pnl--${pnlClass}">₹${pnl.toFixed(2)}</td>
-                </tr>`;
+        // Tab click handlers
+        document.querySelectorAll('.help-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                switchTab(this.dataset.tab);
             });
-            html += '</tbody></table>';
-            content.innerHTML = html;
-        }
-
-        function updateTrades(trades) {
-            const content = document.getElementById('tradesContent');
-            if (!trades || trades.length === 0) {
-                content.innerHTML = '<p style="color: var(--color-text-secondary); text-align: center; padding: var(--space-8) 0; font-size: var(--text-sm);">No trades yet</p>';
-                return;
-            }
-
-            let html = '<table><thead><tr><th>Time</th><th>Symbol</th><th>Side</th><th>P&L</th></tr></thead><tbody>';
-            trades.slice(-5).reverse().forEach(t => {
-                const pnlClass = t.pnl > 0 ? 'positive' : 'negative';
-                html += `<tr>
-                    <td>${new Date(t.timestamp).toLocaleTimeString()}</td>
-                    <td class="table-symbol">${t.symbol}</td>
-                    <td>${t.action}</td>
-                    <td class="table-pnl table-pnl--${pnlClass}">₹${t.pnl.toFixed(2)}</td>
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            content.innerHTML = html;
-        }
-
-        function loadLogs() {
-            fetch(`/api/logs?type=${currentLogType}&lines=20`)
-                .then(r => r.json())
-                .then(data => {
-                    const viewer = document.getElementById('logViewer');
-                    if (!data.logs || data.logs.length === 0) return;
-
-                    let html = '';
-                    data.logs.forEach(log => {
-                        if (log.timestamp) {
-                            html += `<div class="log-entry">
-                                <span class="log-timestamp">${new Date(log.timestamp).toLocaleTimeString()}</span>
-                                <span class="log-level log-level--${log.level}">[${log.level}]</span>
-                                <span>${log.message}</span>
-                            </div>`;
-                        }
-                    });
-                    viewer.innerHTML = html;
-                })
-                .catch(e => console.error('Log load failed:', e));
-        }
-
-        function switchLogTab(type) {
-            currentLogType = type;
-            const buttons = document.querySelectorAll('.card__header .chart-tabs .chart-tab');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            loadLogs();
-        }
-
-        function showAlert(message, type) {
-            const area = document.getElementById('alertArea');
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type} fade-in`;
-            alert.innerHTML = `
-                <i data-lucide="${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'alert-triangle'}" style="width: 18px; height: 18px;"></i>
-                <span>${message}</span>
-            `;
-            area.appendChild(alert);
-            lucide.createIcons();
-            setTimeout(() => alert.remove(), 5000);
-        }
-
-        function startBot() {
-            const mode = document.getElementById('modeSelect').value;
-            if (mode === 'live' && !confirm('⚠️ Start LIVE trading with real money?')) return;
-
-            fetch('/api/start', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({mode})
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) showAlert(data.message, 'success');
-                else showAlert(data.error, 'error');
-                updateDashboard();
-            });
-        }
-
-        function pauseBot() {
-            fetch('/api/pause', {method: 'POST'})
-                .then(r => r.json())
-                .then(data => {
-                    showAlert(data.success ? data.message : data.error, data.success ? 'success' : 'error');
-                    updateDashboard();
-                });
-        }
-
-        function stopBot() {
-            fetch('/api/stop', {method: 'POST'})
-                .then(r => r.json())
-                .then(data => {
-                    showAlert(data.success ? data.message : data.error, data.success ? 'success' : 'error');
-                    updateDashboard();
-                });
-        }
-
-        function emergencyStop() {
-            if (!confirm('🛑 EMERGENCY STOP\n\nThis will cancel all orders and close all positions!\n\nAre you sure?')) return;
-
-            fetch('/api/emergency-stop', {method: 'POST'})
-                .then(r => r.json())
-                .then(data => {
-                    showAlert(data.success ? data.message : data.error, data.success ? 'warning' : 'error');
-                    updateDashboard();
-                });
-        }
-
-        // Mobile sidebar toggle
-        function toggleMobileSidebar() {
-            const sidebar = document.querySelector('.sidebar');
-            const hamburger = document.getElementById('hamburgerBtn');
-            sidebar.classList.toggle('mobile-hidden');
-            hamburger.classList.toggle('active');
-        }
+        });
 
         // Initialize
-        window.onload = () => {
-            initChart();
-            updateDashboard();
-            loadLogs();
-
-            // Hide sidebar on mobile by default
-            if (window.innerWidth <= 768) {
-                document.querySelector('.sidebar').classList.add('mobile-hidden');
-            }
-
-            setInterval(() => {
-                updateDashboard();
-                loadLogs();
-            }, 2000);
-        };
+        document.addEventListener('DOMContentLoaded', function() {
+            renderFAQ();
+            initSearch();
+            lucide.createIcons();
+        });
     </script>
 </body>
 </html>

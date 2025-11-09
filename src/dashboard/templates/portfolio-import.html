@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Import - Scalping Bot</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --color-bg-primary: #0F1014;
+            --color-bg-secondary: #1C1E26;
+            --color-bg-tertiary: #2A2D3A;
+            --color-accent-primary: #00C9A7;
+            --color-success: #00D09C;
+            --color-error: #FF5252;
+            --color-text-primary: #F9FAFB;
+            --color-text-secondary: #9CA3AF;
+            --color-border: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(31, 41, 55, 0.6);
+            --space-4: 8px;
+            --space-5: 12px;
+            --space-6: 16px;
+            --space-8: 24px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            padding: var(--space-8);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: var(--space-8);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: var(--space-4);
+        }
+
+        .header p {
+            color: var(--color-text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .wizard {
+            background: var(--color-bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-8);
+        }
+
+        .steps {
+            display: flex;
+            margin-bottom: var(--space-8);
+            gap: var(--space-4);
+        }
+
+        .step {
+            flex: 1;
+            padding: var(--space-5);
+            background: var(--glass-bg);
+            border-radius: var(--radius-md);
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .step.active {
+            border-color: var(--color-accent-primary);
+            background: rgba(0, 201, 167, 0.1);
+        }
+
+        .step.completed {
+            border-color: var(--color-success);
+            opacity: 0.6;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            margin: 0 auto var(--space-4);
+            background: var(--color-bg-tertiary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .step.active .step-number {
+            background: var(--color-accent-primary);
+            color: var(--color-bg-primary);
+        }
+
+        .step.completed .step-number {
+            background: var(--color-success);
+        }
+
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: var(--space-6);
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--space-4);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        select, input[type="file"] {
+            width: 100%;
+            padding: var(--space-5);
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            color: var(--color-text-primary);
+            font-size: 0.875rem;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--color-border);
+            border-radius: var(--radius-md);
+            padding: var(--space-8);
+            text-align: center;
+            background: var(--glass-bg);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--color-accent-primary);
+            background: rgba(0, 201, 167, 0.05);
+        }
+
+        .file-upload-area.has-file {
+            border-color: var(--color-success);
+            background: rgba(0, 208, 156, 0.1);
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+            max-height: 300px;
+            overflow-y: auto;
+            display: block;
+        }
+
+        .preview-table thead {
+            position: sticky;
+            top: 0;
+            background: var(--color-bg-tertiary);
+        }
+
+        .preview-table th,
+        .preview-table td {
+            padding: var(--space-4);
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .preview-table th {
+            font-weight: 600;
+            color: var(--color-text-secondary);
+        }
+
+        .buttons {
+            display: flex;
+            gap: var(--space-5);
+            margin-top: var(--space-8);
+        }
+
+        button {
+            flex: 1;
+            padding: var(--space-5) var(--space-6);
+            border-radius: var(--radius-md);
+            border: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--color-accent-primary);
+            color: var(--color-bg-primary);
+        }
+
+        .btn-primary:hover {
+            background: #00B595;
+        }
+
+        .btn-secondary {
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #3A3D4A;
+        }
+
+        .success-message {
+            text-align: center;
+            padding: var(--space-8);
+        }
+
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--color-success);
+            border-radius: 50%;
+            margin: 0 auto var(--space-6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-5);
+            margin-top: var(--space-6);
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            padding: var(--space-5);
+            border-radius: var(--radius-md);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--color-accent-primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+            margin-top: var(--space-4);
+        }
+
+        .error-message {
+            background: rgba(255, 82, 82, 0.1);
+            border: 1px solid var(--color-error);
+            color: var(--color-error);
+            padding: var(--space-5);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-6);
+            font-size: 0.875rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--space-8);
+        }
+
+        .spinner {
+            border: 3px solid var(--color-bg-tertiary);
+            border-top: 3px solid var(--color-accent-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto var(--space-5);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Portfolio Import Wizard</h1>
+            <p>Import your trades from broker files (CSV or Excel) - Supports Zerodha, Groww, Upstox, ICICI Direct</p>
+        </div>
+
+        <div class="wizard">
+            <!-- Step Indicators -->
+            <div class="steps">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div>Select Broker</div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div>Upload Files</div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div>Preview Trades</div>
+                </div>
+                <div class="step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div>Confirm Import</div>
+                </div>
+                <div class="step" data-step="5">
+                    <div class="step-number">5</div>
+                    <div>Complete</div>
+                </div>
+            </div>
+
+            <div id="error-container"></div>
+
+            <!-- Step 1: Select Broker & Portfolio -->
+            <div class="step-content active" data-step="1">
+                <div class="form-group">
+                    <label for="portfolio">Select Portfolio</label>
+                    <select id="portfolio" onchange="updateBrokerFromPortfolio()">
+                        <option value="">-- Choose a portfolio --</option>
+                        <option value="1" data-broker="zerodha">Zerodha Main</option>
+                        <option value="2" data-broker="groww">Groww Main</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="broker">Broker</label>
+                    <select id="broker" disabled>
+                        <option value="">-- Select portfolio first --</option>
+                        <option value="zerodha">Zerodha</option>
+                        <option value="groww">Groww</option>
+                        <option value="upstox">Upstox</option>
+                        <option value="icici">ICICI Direct</option>
+                        <option value="generic">Generic CSV</option>
+                    </select>
+                    <small style="color: var(--color-text-secondary); font-size: 0.75rem; margin-top: 4px; display: block;">
+                        Broker is auto-filled based on selected portfolio
+                    </small>
+                </div>
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="window.location.href='/'">Cancel</button>
+                    <button class="btn-primary" onclick="nextStep()">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Upload Files -->
+            <div class="step-content" data-step="2">
+                <div class="form-group">
+                    <label>Upload Trade Files (CSV or Excel)</label>
+                    <div class="file-upload-area" id="file-upload-area" onclick="document.getElementById('csv-file').click()">
+                        <i data-lucide="upload" style="width: 48px; height: 48px; margin: 0 auto 12px; opacity: 0.5;"></i>
+                        <p id="file-name">Click to upload or drag & drop files</p>
+                        <p style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 8px;">
+                            Supports: CSV (.csv), Excel (.xlsx, .xls) • Multiple files allowed • Max 10MB per file
+                        </p>
+                    </div>
+                    <input type="file" id="csv-file" accept=".csv,.xlsx,.xls" multiple style="display: none;" onchange="handleFileSelect(event)">
+                    <div id="selected-files-list" style="margin-top: 12px;"></div>
+                </div>
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">Back</button>
+                    <button class="btn-primary" onclick="uploadFile()" id="upload-btn" disabled>Upload & Preview</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Preview Trades -->
+            <div class="step-content" data-step="3">
+                <div id="loading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Processing file...</p>
+                </div>
+                <div id="preview-container"></div>
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">Back</button>
+                    <button class="btn-primary" onclick="nextStep()">Continue</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Confirm Import -->
+            <div class="step-content" data-step="4">
+                <h3 style="margin-bottom: 16px;">Confirm Import</h3>
+                <div id="import-summary"></div>
+                <div class="buttons">
+                    <button class="btn-secondary" onclick="prevStep()">Back</button>
+                    <button class="btn-primary" onclick="confirmImport()">Import Trades</button>
+                </div>
+            </div>
+
+            <!-- Step 5: Success -->
+            <div class="step-content" data-step="5">
+                <div class="success-message">
+                    <div class="success-icon">
+                        <i data-lucide="check" style="width: 32px; height: 32px; color: #0F1014;"></i>
+                    </div>
+                    <h2 style="margin-bottom: 12px;">Import Successful!</h2>
+                    <p style="color: var(--color-text-secondary); margin-bottom: 24px;">
+                        Your trades have been imported and P&L has been calculated.
+                    </p>
+                    <div class="stats" id="final-stats"></div>
+                </div>
+                <div class="buttons">
+                    <button class="btn-primary" onclick="window.location.href='/portfolio'">View Portfolio</button>
+                    <button class="btn-secondary" onclick="window.location.href='/'">Back to Dashboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let selectedFile = null;
+        let previewData = null;
+        let importResult = null;
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Load portfolios on page load
+        async function loadPortfolios() {
+            try {
+                const response = await fetch('/api/portfolios');
+                const data = await response.json();
+
+                if (data.success && data.portfolios) {
+                    const portfolioSelect = document.getElementById('portfolio');
+                    portfolioSelect.innerHTML = '<option value="">-- Choose a portfolio --</option>';
+
+                    data.portfolios.forEach(portfolio => {
+                        const option = document.createElement('option');
+                        option.value = portfolio.id;
+                        option.setAttribute('data-broker', portfolio.broker);
+                        option.textContent = portfolio.name;
+                        portfolioSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading portfolios:', error);
+            }
+        }
+
+        // Load portfolios when page loads
+        loadPortfolios();
+
+        function updateBrokerFromPortfolio() {
+            const portfolioSelect = document.getElementById('portfolio');
+            const brokerSelect = document.getElementById('broker');
+            const selectedOption = portfolioSelect.options[portfolioSelect.selectedIndex];
+            const broker = selectedOption.getAttribute('data-broker');
+
+            if (broker) {
+                brokerSelect.value = broker;
+                brokerSelect.disabled = false;
+            } else {
+                brokerSelect.value = '';
+                brokerSelect.disabled = true;
+            }
+        }
+
+        function nextStep() {
+            if (currentStep === 1) {
+                const portfolio = document.getElementById('portfolio').value;
+                const broker = document.getElementById('broker').value;
+
+                if (!portfolio) {
+                    showError('Please select a portfolio');
+                    return;
+                }
+                if (!broker) {
+                    showError('Please select a broker');
+                    return;
+                }
+            }
+
+            if (currentStep < 5) {
+                currentStep++;
+                updateUI();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            // Update step indicators
+            document.querySelectorAll('.step').forEach(step => {
+                const stepNum = parseInt(step.dataset.step);
+                step.classList.remove('active', 'completed');
+                if (stepNum === currentStep) {
+                    step.classList.add('active');
+                } else if (stepNum < currentStep) {
+                    step.classList.add('completed');
+                }
+            });
+
+            // Update step content
+            document.querySelectorAll('.step-content').forEach(content => {
+                content.classList.remove('active');
+                if (parseInt(content.dataset.step) === currentStep) {
+                    content.classList.add('active');
+                }
+            });
+
+            // Update step-specific content
+            if (currentStep === 4) {
+                showImportSummary();
+            }
+
+            lucide.createIcons();
+        }
+
+        let selectedFiles = [];
+
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            selectedFiles = files;
+
+            if (files.length > 0) {
+                // Update main text
+                document.getElementById('file-name').textContent =
+                    files.length === 1 ? files[0].name : `${files.length} files selected`;
+                document.getElementById('file-upload-area').classList.add('has-file');
+
+                // Show file list
+                const filesList = document.getElementById('selected-files-list');
+                filesList.innerHTML = files.map((file, index) => `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px; background: var(--glass-bg); border-radius: 4px; margin-bottom: 4px;">
+                        <span style="font-size: 0.875rem;">
+                            <i data-lucide="${file.name.endsWith('.xlsx') || file.name.endsWith('.xls') ? 'file-spreadsheet' : 'file-text'}" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle;"></i>
+                            ${file.name} <span style="color: var(--color-text-secondary);">(${(file.size / 1024).toFixed(1)} KB)</span>
+                        </span>
+                        <button onclick="removeFile(${index})" style="background: none; border: none; color: var(--color-error); cursor: pointer; padding: 4px;">
+                            <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                        </button>
+                    </div>
+                `).join('');
+
+                lucide.createIcons();
+                document.getElementById('upload-btn').disabled = false;
+            } else {
+                document.getElementById('file-name').textContent = 'Click to upload or drag & drop files';
+                document.getElementById('file-upload-area').classList.remove('has-file');
+                document.getElementById('selected-files-list').innerHTML = '';
+                document.getElementById('upload-btn').disabled = true;
+            }
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach(file => dataTransfer.items.add(file));
+            document.getElementById('csv-file').files = dataTransfer.files;
+            handleFileSelect({ target: { files: dataTransfer.files } });
+        }
+
+        async function uploadFile() {
+            if (!selectedFiles || selectedFiles.length === 0) {
+                showError('Please select at least one file');
+                return;
+            }
+
+            const portfolioId = document.getElementById('portfolio').value;
+            const broker = document.getElementById('broker').value;
+
+            if (!portfolioId) {
+                showError('Please select a portfolio');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('preview-container').innerHTML = '';
+
+            try {
+                const allResults = [];
+
+                // Upload each file sequentially
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const file = selectedFiles[i];
+
+                    // Update loading message
+                    document.querySelector('#loading p').textContent =
+                        `Processing file ${i + 1} of ${selectedFiles.length}: ${file.name}...`;
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('broker', broker);
+
+                    const response = await fetch(`/api/portfolios/${portfolioId}/import`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        allResults.push({
+                            filename: file.name,
+                            success: true,
+                            ...result
+                        });
+                    } else {
+                        allResults.push({
+                            filename: file.name,
+                            success: false,
+                            error: result.error || 'Import failed'
+                        });
+                    }
+                }
+
+                document.getElementById('loading').style.display = 'none';
+
+                // Combine results
+                const successCount = allResults.filter(r => r.success).length;
+                const totalTrades = allResults.reduce((sum, r) => sum + (r.import_stats?.imported || 0), 0);
+
+                if (successCount > 0) {
+                    previewData = {
+                        success: true,
+                        files: allResults,
+                        total_files: allResults.length,
+                        successful_files: successCount,
+                        total_trades: totalTrades,
+                        import_stats: {
+                            imported: totalTrades,
+                            failed: allResults.reduce((sum, r) => sum + (r.import_stats?.failed || 0), 0),
+                            total: totalTrades
+                        }
+                    };
+                    showPreview(previewData);
+                    nextStep();
+                } else {
+                    showError('All imports failed. Please check your files and try again.');
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                showError('Network error: ' + error.message);
+            }
+        }
+
+        function showPreview(data) {
+            const container = document.getElementById('preview-container');
+            const stats = data.import_stats;
+
+            container.innerHTML = `
+                <div class="stats" style="margin-bottom: 16px;">
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.total_rows}</div>
+                        <div class="stat-label">Total Trades</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: var(--color-success);">${stats.success_count}</div>
+                        <div class="stat-label">Imported</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: var(--color-error);">${stats.failed_count}</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+                <p style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 16px;">
+                    ${stats.success_count} trades imported successfully
+                </p>
+            `;
+        }
+
+        function showImportSummary() {
+            const container = document.getElementById('import-summary');
+            const stats = previewData.import_stats;
+
+            container.innerHTML = `
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: var(--radius-md); margin-bottom: 16px;">
+                    <p style="font-size: 0.875rem; margin-bottom: 8px;">
+                        <strong>Broker:</strong> ${document.getElementById('broker').selectedOptions[0].text}
+                    </p>
+                    <p style="font-size: 0.875rem; margin-bottom: 8px;">
+                        <strong>File:</strong> ${selectedFile.name}
+                    </p>
+                    <p style="font-size: 0.875rem; margin-bottom: 8px;">
+                        <strong>Trades to import:</strong> ${stats.success_count}
+                    </p>
+                    <p style="font-size: 0.875rem; color: var(--color-text-secondary);">
+                        P&L will be calculated automatically after import
+                    </p>
+                </div>
+            `;
+        }
+
+        async function confirmImport() {
+            // Calculate P&L after import
+            try {
+                const response = await fetch('/api/portfolios/1/calculate-pnl', {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    importResult = result;
+                    showFinalStats(result);
+                    nextStep();
+                } else {
+                    showError('P&L calculation failed: ' + result.error);
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            }
+        }
+
+        function showFinalStats(data) {
+            const container = document.getElementById('final-stats');
+
+            container.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${previewData.import_stats.success_count}</div>
+                    <div class="stat-label">Trades Imported</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${data.holdings_count || 0}</div>
+                    <div class="stat-label">Active Holdings</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: ${data.total_pnl >= 0 ? 'var(--color-success)' : 'var(--color-error)'}">
+                        ₹${Math.abs(data.total_pnl || 0).toFixed(2)}
+                    </div>
+                    <div class="stat-label">Total P&L</div>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            const container = document.getElementById('error-container');
+            container.innerHTML = `<div class="error-message">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

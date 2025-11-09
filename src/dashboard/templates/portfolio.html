@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio - Scalping Bot</title>
+    <script src="https://unpkg.com/lucide@latest">
+        // ==================== TOP BAR FUNCTIONS ====================
+        function switchPortfolio(portfolioId) {
+            localStorage.setItem('selectedPortfolio', portfolioId);
+            if (typeof loadPortfolioData === 'function') {
+                loadPortfolioData(portfolioId);
+            } else if (typeof loadDashboardData === 'function') {
+                loadDashboardData();
+            } else {
+                window.location.reload();
+            }
+        }
+
+        async function loadTopBarFunds() {
+            try {
+                const portfolioId = localStorage.getItem('selectedPortfolio') || '1';
+                const response = await fetch(`/api/portfolios/${portfolioId}`);
+                const data = await response.json();
+
+                if (data.success && data.portfolio) {
+                    const fundsElement = document.getElementById('topbar-funds');
+                    if (fundsElement) {
+                        const available = data.portfolio.current_value || 0;
+                        fundsElement.textContent = `₹${available.toLocaleString('en-IN')}`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading funds:', error);
+            }
+        }
+
+        // Initialize top bar on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Restore saved portfolio
+            const savedPortfolio = localStorage.getItem('selectedPortfolio') || '1';
+            const selector = document.getElementById('topbar-account-selector');
+            if (selector) {
+                selector.value = savedPortfolio;
+            }
+
+            // Mark current page as active
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href === currentPath || (currentPath === '/' && href === '/')) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Load funds
+            loadTopBarFunds();
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --color-bg-primary: #0F1014;
+            --color-bg-secondary: #1C1E26;
+            --color-bg-tertiary: #2A2D3A;
+            --color-accent-primary: #00C9A7;
+            --color-success: #00D09C;
+            --color-error: #FF5252;
+            --color-text-primary: #F9FAFB;
+            --color-text-secondary: #9CA3AF;
+            --color-border: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(31, 41, 55, 0.6);
+            --space-4: 8px;
+            --space-5: 12px;
+            --space-6: 16px;
+            --space-8: 24px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            padding: var(--space-8);
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-8);
+        }
+
+        .header h1 { font-size: 1.5rem; }
+
+        .btn {
+            padding: var(--space-5) var(--space-6);
+            background: var(--color-accent-primary);
+            color: var(--color-bg-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover { background: #00B595; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+
+        .stat-card {
+            background: var(--color-bg-secondary);
+            padding: var(--space-6);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: var(--space-4);
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .positive { color: var(--color-success); }
+        .negative { color: var(--color-error); }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+
+        .card {
+            background: var(--color-bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            padding: var(--space-6);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-6);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        thead {
+            background: var(--glass-bg);
+        }
+
+        th, td {
+            padding: var(--space-5);
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr:hover {
+            background: var(--glass-bg);
+        }
+
+        .risk-gauge {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .risk-score {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .risk-score-value {
+            font-size: 3rem;
+            font-weight: 600;
+        }
+
+        .risk-score-label {
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+        }
+
+        .risk-breakdown {
+            margin-top: var(--space-6);
+        }
+
+        .risk-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-4) 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .risk-item:last-child { border-bottom: none; }
+
+        .risk-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--color-bg-tertiary);
+            border-radius: 3px;
+            margin: 0 var(--space-5);
+            overflow: hidden;
+        }
+
+        .risk-bar-fill {
+            height: 100%;
+            background: var(--color-accent-primary);
+            transition: width 0.3s ease;
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--color-text-secondary);
+        }
+    
+        /* ==================== TOP BAR STYLES ==================== */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: var(--color-bg-secondary);
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: 24px;
+            height: 60px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--color-accent-primary);
+        }
+
+        .topbar-nav {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .nav-link {
+            padding: 8px 16px;
+            text-decoration: none;
+            color: var(--color-text-secondary);
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .nav-link:hover {
+            background: rgba(0, 201, 167, 0.1);
+            color: var(--color-accent-primary);
+        }
+
+        .nav-link.active {
+            background: rgba(0, 201, 167, 0.15);
+            color: var(--color-accent-primary);
+            font-weight: 500;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .topbar-select {
+            padding: 6px 12px;
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            color: var(--color-text-primary);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .topbar-funds {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .funds-label {
+            font-size: 0.7rem;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+        }
+
+        .funds-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--color-success);
+        }
+
+        .topbar-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-active { background: var(--color-success); }
+        .status-paused { background: #f59e0b; }
+        .status-stopped { background: var(--color-error); }
+
+        .topbar-user {
+            width: 36px;
+            height: 36px;
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--color-text-primary);
+            transition: all 0.2s;
+        }
+
+        .topbar-user:hover {
+            background: var(--color-accent-primary);
+            border-color: var(--color-accent-primary);
+            color: var(--color-bg-primary);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .topbar {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 12px;
+            }
+
+            .topbar-nav {
+                order: 3;
+                width: 100%;
+                margin-top: 12px;
+                justify-content: flex-start;
+                overflow-x: auto;
+            }
+
+            .topbar-actions {
+                gap: 8px;
+            }
+
+            .funds-label,
+            .topbar-status {
+                display: none;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="topbar-brand">
+            <i data-lucide="trending-up" style="width: 24px; height: 24px;"></i>
+            <span>Scalping Bot</span>
+        </div>
+
+        <nav class="topbar-nav">
+            <a href="/" class="nav-link">Dashboard</a>
+            <a href="/portfolio" class="nav-link">Portfolio</a>
+            <a href="/strategies" class="nav-link">Strategies</a>
+            <a href="/analytics" class="nav-link">Analytics</a>
+            <a href="/settings" class="nav-link">Settings</a>
+        </nav>
+
+        <div class="topbar-actions">
+            <select id="topbar-account-selector" class="topbar-select" onchange="switchPortfolio(this.value)">
+                <option value="1">Zerodha Main</option>
+                <option value="2">Groww Main</option>
+            </select>
+
+            <div class="topbar-funds">
+                <span class="funds-label">Available</span>
+                <span class="funds-value" id="topbar-funds">₹0</span>
+            </div>
+
+            <div class="topbar-status">
+                <span class="status-dot status-active"></span>
+                <span>Active</span>
+            </div>
+
+            <button class="topbar-user" onclick="window.location.href='/profile'">
+                <i data-lucide="user" style="width: 18px; height: 18px;"></i>
+            </button>
+        </div>
+    </div>
+
+
+    <div class="container">
+        <div class="header">
+            <h1>Portfolio Dashboard</h1>
+            <button class="btn" onclick="window.location.href='/portfolio-import'">
+                <i data-lucide="upload" style="width: 16px; height: 16px;"></i>
+                Import Trades
+            </button>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Value</div>
+                <div class="stat-value">--</div>
+                <div class="stat-change">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total P&L</div>
+                <div class="stat-value">--</div>
+                <div class="stat-change">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Realized P&L</div>
+                <div class="stat-value">--</div>
+                <div class="stat-change">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Unrealized P&L</div>
+                <div class="stat-value">--</div>
+                <div class="stat-change">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="content-grid">
+            <!-- Holdings Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Holdings</h2>
+                    <span id="holdings-count" style="color: var(--color-text-secondary); font-size: 0.875rem;">--</span>
+                </div>
+                <div id="holdings-container">
+                    <div class="loading">Loading holdings...</div>
+                </div>
+            </div>
+
+            <!-- Risk Meter -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Risk Assessment</h2>
+                </div>
+                <div class="risk-gauge" id="risk-gauge-container">
+                    <canvas id="risk-gauge"></canvas>
+                    <div class="risk-score">
+                        <div class="risk-score-value" id="risk-score-value">--</div>
+                        <div class="risk-score-label" id="risk-score-label">Loading...</div>
+                    </div>
+                </div>
+                <div class="risk-breakdown" id="risk-breakdown">
+                    <div class="risk-item">
+                        <span style="font-size: 0.875rem;">Concentration</span>
+                        <div class="risk-bar">
+                            <div class="risk-bar-fill" style="width: 0%"></div>
+                        </div>
+                        <span style="font-size: 0.875rem; color: var(--color-text-secondary);">--</span>
+                    </div>
+                    <div class="risk-item">
+                        <span style="font-size: 0.875rem;">Volatility</span>
+                        <div class="risk-bar">
+                            <div class="risk-bar-fill" style="width: 0%"></div>
+                        </div>
+                        <span style="font-size: 0.875rem; color: var(--color-text-secondary);">--</span>
+                    </div>
+                    <div class="risk-item">
+                        <span style="font-size: 0.875rem;">Drawdown</span>
+                        <div class="risk-bar">
+                            <div class="risk-bar-fill" style="width: 0%"></div>
+                        </div>
+                        <span style="font-size: 0.875rem; color: var(--color-text-secondary);">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const PORTFOLIO_ID = 1;
+
+        async function loadPortfolioData() {
+            try {
+                // Fetch portfolio info
+                const portfolioRes = await fetch(`/api/portfolios/${PORTFOLIO_ID}`);
+                const portfolio = await portfolioRes.json();
+
+                if (portfolio.success) {
+                    updateStats(portfolio.portfolio);
+                }
+
+                // Fetch holdings
+                const holdingsRes = await fetch(`/api/portfolios/${PORTFOLIO_ID}/holdings`);
+                const holdings = await holdingsRes.json();
+
+                if (holdings.success) {
+                    updateHoldings(holdings.holdings);
+                }
+
+                // Fetch risk
+                const riskRes = await fetch(`/api/portfolios/${PORTFOLIO_ID}/risk`);
+                const risk = await riskRes.json();
+
+                if (risk.success) {
+                    updateRisk(risk);
+                }
+            } catch (error) {
+                console.error('Error loading portfolio data:', error);
+            }
+        }
+
+        function updateStats(portfolio) {
+            const statsHtml = `
+                <div class="stat-card">
+                    <div class="stat-label">Total Value</div>
+                    <div class="stat-value">₹${(portfolio.initial_capital || 0).toLocaleString()}</div>
+                    <div class="stat-change positive">Initial Capital</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total P&L</div>
+                    <div class="stat-value ${(portfolio.total_pnl || 0) >= 0 ? 'positive' : 'negative'}">
+                        ₹${Math.abs(portfolio.total_pnl || 0).toLocaleString()}
+                    </div>
+                    <div class="stat-change ${(portfolio.total_return_pct || 0) >= 0 ? 'positive' : 'negative'}">
+                        ${(portfolio.total_return_pct || 0).toFixed(2)}%
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Realized P&L</div>
+                    <div class="stat-value ${(portfolio.realized_pnl || 0) >= 0 ? 'positive' : 'negative'}">
+                        ₹${Math.abs(portfolio.realized_pnl || 0).toLocaleString()}
+                    </div>
+                    <div class="stat-change">Closed Positions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Unrealized P&L</div>
+                    <div class="stat-value ${(portfolio.unrealized_pnl || 0) >= 0 ? 'positive' : 'negative'}">
+                        ₹${Math.abs(portfolio.unrealized_pnl || 0).toLocaleString()}
+                    </div>
+                    <div class="stat-change">Open Positions</div>
+                </div>
+            `;
+            document.getElementById('stats-grid').innerHTML = statsHtml;
+        }
+
+        function updateHoldings(holdings) {
+            document.getElementById('holdings-count').textContent = `${holdings.length} holdings`;
+
+            if (holdings.length === 0) {
+                document.getElementById('holdings-container').innerHTML = `
+                    <div class="loading">
+                        <p>No holdings yet.</p>
+                        <p style="margin-top: 8px;">
+                            <a href="/portfolio-import" style="color: var(--color-accent-primary);">Import trades</a> to get started.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            const tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Quantity</th>
+                            <th>Avg Price</th>
+                            <th>Current</th>
+                            <th>P&L</th>
+                            <th>P&L %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${holdings.map(h => `
+                            <tr>
+                                <td style="font-weight: 600;">${h.symbol}</td>
+                                <td>${h.quantity}</td>
+                                <td>₹${h.avg_buy_price.toFixed(2)}</td>
+                                <td>₹${h.current_price.toFixed(2)}</td>
+                                <td class="${h.unrealized_pnl >= 0 ? 'positive' : 'negative'}">
+                                    ₹${Math.abs(h.unrealized_pnl).toLocaleString()}
+                                </td>
+                                <td class="${h.unrealized_pnl_pct >= 0 ? 'positive' : 'negative'}">
+                                    ${h.unrealized_pnl_pct.toFixed(2)}%
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('holdings-container').innerHTML = tableHtml;
+        }
+
+        function updateRisk(risk) {
+            const score = risk.risk_score || 0;
+            const level = risk.risk_level || 'Unknown';
+
+            // Update risk score
+            document.getElementById('risk-score-value').textContent = score.toFixed(1);
+            document.getElementById('risk-score-label').textContent = level;
+
+            // Color coding
+            let color = '--color-accent-primary';
+            if (score >= 7) color = '--color-error';
+            else if (score >= 5) color = '--color-warning';
+            else if (score >= 3) color = '--color-info';
+            else color = '--color-success';
+
+            document.getElementById('risk-score-value').style.color = `var(${color})`;
+
+            // Draw gauge
+            drawRiskGauge(score);
+
+            // Update breakdown
+            if (risk.components) {
+                const items = document.querySelectorAll('.risk-item');
+                const components = [
+                    { name: 'concentration', value: risk.concentration_risk },
+                    { name: 'volatility', value: risk.volatility_risk },
+                    { name: 'drawdown', value: risk.drawdown_risk }
+                ];
+
+                items.forEach((item, i) => {
+                    const bar = item.querySelector('.risk-bar-fill');
+                    const valueSpan = item.querySelector('span:last-child');
+                    bar.style.width = `${components[i].value * 10}%`;
+                    valueSpan.textContent = components[i].value.toFixed(1);
+                });
+            }
+        }
+
+        function drawRiskGauge(score) {
+            const canvas = document.getElementById('risk-gauge');
+            const ctx = canvas.getContext('2d');
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [score, 10 - score],
+                        backgroundColor: [
+                            score >= 7 ? '#FF5252' : score >= 5 ? '#FFB946' : '#00C9A7',
+                            'rgba(255, 255, 255, 0.1)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '75%',
+                    rotation: -90,
+                    circumference: 180,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+        }
+
+        // Load data on page load
+        loadPortfolioData();
+
+        // Refresh every 10 seconds
+        setInterval(loadPortfolioData, 10000);
+    </script>
+</body>
+</html>
